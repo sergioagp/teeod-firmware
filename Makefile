@@ -9,6 +9,7 @@ CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
 OCPY = $(CROSS_COMPILE)objcopy
+ODUMP = $(CROSS_COMPILE)objdump
 GDB = $(CROSS_COMPILE)gdb
 
 QEMU = qemu-system-arm
@@ -45,7 +46,7 @@ OBJ_DIR = $(BUILD_DIR)/objs
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 .PHONY: all
-all: $(BUILD_DIR)/$(TARGET).bin
+all: $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).dis
 
 $(BUILD_DIR):
 	$(MKDIR) -p $(BUILD_DIR)
@@ -59,6 +60,9 @@ $(OBJ_DIR)/%.o: %.c $(OBJ_DIR)
 
 $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf
 	$(OCPY) $< $@ -O binary
+
+$(BUILD_DIR)/$(TARGET).dis: $(BUILD_DIR)/$(TARGET).elf
+	$(ODUMP) -Cd -M reg-names-raw -S $< > $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS)
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@

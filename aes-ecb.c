@@ -1,10 +1,7 @@
 #include "aes-ecb.h"
-#include <string.h>
 #include <stdint.h>
-
-#define mul_by_2(x) ((x << 1) ^ ((x & 0x80) ? 0x1B : 0x00))
-#define mul_by_3(x) (mul_by_2(x) ^ (x))
-
+#include <stdio.h>
+#include <string.h>
 
 // Lookup tables for the key expansion algorithm
 static const uint8_t sbox[256] = {
@@ -31,142 +28,106 @@ static const uint8_t rcon[10] = {
   0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 };
 
-// Forward declarations
-static void aes_ecb_key_expansion(uint8_t* round_keys, const uint8_t* key);
-static void aes_ecb_add_round_key(uint8_t* state, const uint8_t* round_key);
-static void aes_ecb_sub_bytes(uint8_t* state);
-static void aes_ecb_shift_rows(uint8_t* state);
-static void aes_ecb_mix_columns(uint8_t* state);
+static const uint8_t inv_sbox[256] = {
+  0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
+  0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
+  0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
+  0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
+  0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
+  0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
+  0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
+  0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
+  0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
+  0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
+  0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
+  0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
+  0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
+  0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
+  0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
+  0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
+};
 
-void aes_ecb_init(aes_ecb_ctx_t* ctx, const uint8_t* key) {
-  // Copy the key to the context
-  memcpy(ctx->key, key, AES_BLOCK_SIZE);
-
-  // Generate the round keys from the key
-  aes_ecb_key_expansion(ctx->round_keys, key);
-}
-
-void aes_ecb_encrypt(aes_ecb_ctx_t* ctx, const uint8_t* in, uint8_t* out) {
-  // Initialize variables
-  uint8_t i;
-  uint8_t state[AES_BLOCK_SIZE];
-
-  // Copy the input block to the state
-  memcpy(state, in, AES_BLOCK_SIZE);
-
-  // Perform the initial round
-  aes_ecb_add_round_key(state, ctx->round_keys);
-
-  // Perform the 9 main rounds
-  for (i = 1; i <= 9; ++i) {
-    aes_ecb_sub_bytes(state);
-    aes_ecb_shift_rows(state);
-    aes_ecb_mix_columns(state);
-    aes_ecb_add_round_key(state, ctx->round_keys + i * AES_BLOCK_SIZE);
+static uint8_t rijndael_mul(uint8_t a, uint8_t b) {
+  uint8_t p = 0;
+  uint8_t counter;
+  for (counter = 0; counter < 8; counter++) {
+    if (b & 1) {
+      p ^= a;
+    }
+    if (a & 0x80) {
+      a = (a << 1) ^ 0x1b;
+    } else {
+      a <<= 1;
+    }
+    b >>= 1;
   }
-
-  // Perform the final round
-  aes_ecb_sub_bytes(state);
-  aes_ecb_shift_rows(state);
-  aes_ecb_add_round_key(state, ctx->round_keys + 10 * AES_BLOCK_SIZE);
-
-  // Copy the state to the output block
-  memcpy(out, state, AES_BLOCK_SIZE);
+  return p;
 }
 
-
-void aes_ecb_decrypt(aes_ecb_ctx_t* ctx, const uint8_t* in, uint8_t* out) {
-  // Initialize variables
-  uint8_t i;
-  uint8_t state[AES_BLOCK_SIZE];
-
-  // Copy the input block to the state
-  memcpy(state, in, AES_BLOCK_SIZE);
-
-  // Perform the initial round
-  aes_ecb_add_round_key(state, ctx->round_keys + 10 * AES_BLOCK_SIZE);
-
-  // Perform the 9 main rounds
-  for (i = 9; i >= 1; --i) {
-    aes_ecb_shift_rows(state);
-    aes_ecb_sub_bytes(state);
-    aes_ecb_add_round_key(state, ctx->round_keys + i * AES_BLOCK_SIZE);
-    aes_ecb_mix_columns(state);
-  }
-
-  // Perform the final round
-  aes_ecb_shift_rows(state);
-  aes_ecb_sub_bytes(state);
-  aes_ecb_add_round_key(state, ctx->round_keys);
-
-  // Copy the state to the output block
-  memcpy(out, state, AES_BLOCK_SIZE);
-}
-
-
-static void aes_ecb_key_expansion(uint8_t* round_keys, const uint8_t* key) {
-  // Initialize variables
+static void rijndael_key_schedule(const uint8_t* key, uint8_t* w) {
   uint8_t temp[4];
-  uint8_t i, j;
+  uint8_t i;
 
-  // Copy the key to the round keys
-  memcpy(round_keys, key, AES_BLOCK_SIZE);
+  for (i = 0; i < Nk; i++) {
+    w[i * 4] = key[i * 4];
+    w[i * 4 + 1] = key[i * 4 + 1];
+    w[i * 4 + 2] = key[i * 4 + 2];
+    w[i * 4 + 3] = key[i * 4 + 3];
+  }
 
-  // Loop through the remaining round keys
-  for (i = AES_BLOCK_SIZE; i < AES_ROUND_SIZE; i += 4) {
-    // Copy the previous word to the temp buffer
-    memcpy(temp, round_keys + i - 4, 4);
-
-    // Perform key expansion
-    if (i % AES_BLOCK_SIZE == 0) {
-      // Rotate the temp buffer and apply the sbox to each byte
-      uint8_t t = temp[0];
-      temp[0] = sbox[temp[1]] ^ rcon[i / AES_BLOCK_SIZE - 1];
-      temp[1] = sbox[temp[2]];
-      temp[2] = sbox[temp[3]];
-      temp[3] = sbox[t];
-    } else if (AES_BLOCK_SIZE > 6 && i % AES_BLOCK_SIZE == 4) {
-      // Apply the sbox to each byte of the temp buffer
+  for (i = Nk; i < Nb * (Nr + 1); i++) {
+    temp[0] = w[(i - 1) * 4];
+    temp[1] = w[(i - 1) * 4 + 1];
+    temp[2] = w[(i - 1) * 4 + 2];
+    temp[3] = w[(i - 1) * 4 + 3];
+    if (i % Nk == 0) {
+      temp[0] = sbox[temp[0]];
+      temp[1] = sbox[temp[1]];
+      temp[2] = sbox[temp[2]];
+      temp[3] = sbox[temp[3]];
+      temp[0] ^= rcon[i / Nk - 1];
+    } else if (Nk > 6 && i % Nk == 4) {
       temp[0] = sbox[temp[0]];
       temp[1] = sbox[temp[1]];
       temp[2] = sbox[temp[2]];
       temp[3] = sbox[temp[3]];
     }
-
-    // XOR the temp buffer with the previous word
-    for (j = 0; j < 4; ++j) {
-      round_keys[i + j] = round_keys[i - AES_BLOCK_SIZE + j] ^ temp[j];
-    }
+    w[i * 4] = w[(i - Nk) * 4] ^ temp[0];
+    w[i * 4 + 1] = w[(i - Nk) * 4 + 1] ^ temp[1];
+    w[i * 4 + 2] = w[(i - Nk) * 4 + 2] ^ temp[2];
+    w[i * 4 + 3] = w[(i - Nk) * 4 + 3] ^ temp[3];
   }
 }
 
-static void aes_ecb_add_round_key(uint8_t* state, const uint8_t* round_key) {
-  // Initialize variables
+static void rijndael_add_round_key(uint8_t* state, const uint8_t* w, uint8_t round) {
   uint8_t i;
-  // XOR each byte of the state with the corresponding byte of the round key
-  for (i = 0; i < AES_BLOCK_SIZE; ++i) {
-    state[i] ^= round_key[i];
+  for (i = 0; i < 16; i++) {
+    state[i] ^= w[round * Nb * 4 + i];
   }
 }
 
-static void aes_ecb_sub_bytes(uint8_t* state) {
-  // Initialize variables
+static void rijndael_sub_bytes(uint8_t* state) {
   uint8_t i;
-  // Substitute each byte of the state with the corresponding value from the sbox lookup table
-  for (i = 0; i < AES_BLOCK_SIZE; ++i) {
+  for (i = 0; i < 16; i++) {
     state[i] = sbox[state[i]];
   }
 }
 
-static void aes_ecb_shift_rows(uint8_t* state) {
-  // Shift the second row by 1 byte to the left
-  uint8_t temp = state[1];
+  //  |  0  4  8 12 |     |  0  4  8 12 |
+  //  |  1  5  9 13 |  => |  5  9 13  1 |
+  //  |  2  6 10 14 |     | 10 14  2  6 |
+  //  |  3  7 11 15 |     | 15  3  7 11 |
+static void rijndael_shift_rows(uint8_t* state) {
+  uint8_t temp;
+
+  // Shift row 1
+  temp = state[1];
   state[1] = state[5];
   state[5] = state[9];
   state[9] = state[13];
   state[13] = temp;
 
-  // Shift the third row by 2 bytes to the left
+  // Shift row 2
   temp = state[2];
   state[2] = state[10];
   state[10] = temp;
@@ -174,28 +135,153 @@ static void aes_ecb_shift_rows(uint8_t* state) {
   state[6] = state[14];
   state[14] = temp;
 
-  // Shift the fourth row by 3 bytes to the left
-  temp = state[3];
-  state[3] = state[15];
+  // Shift row 3
+  temp = state[15];
   state[15] = state[11];
   state[11] = state[7];
-  state[7] = temp;
+  state[7] = state[3];
+  state[3] = temp;
 }
 
-static void aes_ecb_mix_columns(uint8_t* state) {
-  uint8_t i, j;
-  uint8_t tmp[4];
-
-  // Mix each column of the state
-  for (i = 0; i < 4; ++i) {
-    // Copy the column to a temporary buffer
-    for (j = 0; j < 4; ++j) {
-      tmp[j] = state[i + 4*j];
-    }
-    // Perform the mixing operation
-    state[i]     = mul_by_2(tmp[0]) ^ mul_by_3(tmp[1]) ^ tmp[2] ^ tmp[3];
-    state[i + 4] = tmp[0] ^ mul_by_2(tmp[1]) ^ mul_by_3(tmp[2]) ^ tmp[3];
-    state[i + 8] = tmp[0] ^ tmp[1] ^ mul_by_2(tmp[2]) ^ mul_by_3(tmp[3]);
-    state[i + 12] = mul_by_3(tmp[0]) ^ tmp[1] ^ tmp[2] ^ mul_by_2(tmp[3]);
+static void rijndael_mix_columns(uint8_t* state) {
+  uint8_t i;
+  uint8_t a[4];
+  for (i = 0; i < 4; i++) {
+    a[0] = state[i];
+    a[1] = state[i + 4];
+    a[2] = state[i + 8];
+    a[3] = state[i + 12];
+    state[i] = rijndael_mul(a[0], 2) ^ rijndael_mul(a[1], 3) ^ a[2] ^ a[3];
+    state[i + 4] = a[0] ^ rijndael_mul(a[1], 2) ^ rijndael_mul(a[2], 3) ^ a[3];
+    state[i + 8] = a[0] ^ a[1] ^ rijndael_mul(a[2], 2) ^ rijndael_mul(a[3], 3);
+    state[i + 12] = rijndael_mul(a[0], 3) ^ a[1] ^ a[2] ^ rijndael_mul(a[3], 2);
   }
 }
+
+static void rijndael_inv_sub_bytes(uint8_t* state) {
+  uint8_t i;
+  for (i = 0; i <16; i++) {
+    state[i] = inv_sbox[state[i]];
+  }
+}
+
+static void rijndael_inv_shift_rows(uint8_t* state) {
+  uint8_t temp;
+
+  // Shift row 1
+  temp = state[13];
+  state[13] = state[9];
+  state[9] = state[5];
+  state[5] = state[1];
+  state[1] = temp;
+
+  // Shift row 2
+  temp = state[14];
+  state[14] = state[6];
+  state[6] = temp;
+  temp = state[10];
+  state[10] = state[2];
+  state[2] = temp;
+
+  // Shift row 3
+  temp = state[3];
+  state[3] = state[7];
+  state[7] = state[11];
+  state[11] = state[15];
+  state[15] = temp;
+}
+
+static void rijndael_inv_mix_columns(uint8_t* state) {
+  uint8_t i;
+  uint8_t a[4];
+  for (i = 0; i < 4; i++) {
+    a[0] = state[i];
+    a[1] = state[i + 4];
+    a[2] = state[i + 8];
+    a[3] = state[i + 12];
+    state[i] = rijndael_mul(a[0], 0xe) ^ rijndael_mul(a[1], 0xb) ^ rijndael_mul(a[2], 0xd) ^ rijndael_mul(a[3], 0x9);
+    state[i + 4] = rijndael_mul(a[0], 0x9) ^ rijndael_mul(a[1], 0xe) ^ rijndael_mul(a[2], 0xb) ^ rijndael_mul(a[3], 0xd);
+    state[i + 8] = rijndael_mul(a[0], 0xd) ^ rijndael_mul(a[1], 0x9) ^ rijndael_mul(a[2], 0xe) ^ rijndael_mul(a[3], 0xb);
+    state[i + 12] = rijndael_mul(a[0], 0xb) ^ rijndael_mul(a[1], 0xd) ^ rijndael_mul(a[2], 0x9) ^ rijndael_mul(a[3], 0xe);
+  }
+}
+
+void aes_128_ecb_encrypt(const uint8_t* key, const uint8_t* plaintext, uint8_t* ciphertext) {
+  uint8_t w[Nb * (Nr + 1) * 4];
+  uint8_t i;
+  uint8_t j;
+  uint8_t state[16];
+
+  rijndael_key_schedule(key, w);
+
+  for (i = 0; i < 16; i += 4) {
+    for (j = 0; j < 4; j++) {
+      state[j * 4] = plaintext[i + j];
+      state[j * 4 + 1] = plaintext[i + j + 4];
+      state[j * 4 + 2] = plaintext[i + j + 8];
+      state[j * 4 + 3] = plaintext[i + j + 12];
+    }
+
+    rijndael_add_round_key(state, w, 0);
+
+    for (j = 1; j < Nr; j++) {
+      rijndael_sub_bytes(state);
+      rijndael_shift_rows(state);
+      rijndael_mix_columns(state);
+      rijndael_add_round_key(state, w, j);
+    }
+
+    rijndael_sub_bytes(state);
+    rijndael_shift_rows(state);
+    rijndael_add_round_key(state, w, Nr);
+
+    for (j = 0; j < 4; j++) {
+      ciphertext[i + j] = state[j * 4];
+      ciphertext[i + j + 4] = state[j * 4 + 1];
+      ciphertext[i + j + 8] = state[j * 4 + 2];
+      ciphertext[i + j + 12] = state[j * 4 + 3];
+    }
+  }
+}
+
+void aes_128_ecb_decrypt(const uint8_t* key, const uint8_t* ciphertext, uint8_t* plaintext) {
+  uint8_t w[Nb * (Nr + 1) * 4];
+  uint8_t i;
+  uint8_t j;
+  uint8_t state[16];
+
+  rijndael_key_schedule(key, w);
+
+  for (i = 0; i < 16; i += 4) {
+    for (j = 0; j < 4; j++) {
+      state[j * 4] = ciphertext[i + j];
+      state[j * 4 + 1] = ciphertext[i + j + 4];
+      state[j * 4 + 2] = ciphertext[i + j + 8];
+      state[j * 4 + 3] = ciphertext[i + j + 12];
+    }
+
+    rijndael_add_round_key(state, w, Nr);
+
+    for (j = Nr - 1; j > 0; j--) {
+      rijndael_inv_shift_rows(state);
+      rijndael_inv_sub_bytes(state);
+      rijndael_add_round_key(state, w, j);
+      rijndael_inv_mix_columns(state);
+    }
+
+    rijndael_inv_shift_rows(state);
+    rijndael_inv_sub_bytes(state);
+    rijndael_add_round_key(state, w, 0);
+
+    for (j = 0; j < 4; j++) {
+      plaintext[i + j] = state[j * 4];
+      plaintext[i + j + 4] = state[j * 4 + 1];
+      plaintext[i + j + 8] = state[j * 4 + 2];
+      plaintext[i + j + 12] = state[j * 4 + 3];
+    }
+  }
+}
+
+
+
+
