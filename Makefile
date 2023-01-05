@@ -8,18 +8,22 @@ MKDIR = mkdir
 QEMU = qemu-system-arm
 
 # Project name and directories
-TARGET ?= aes-ecb-test
+TARGET ?= aes-test
 BUILD_DIR ?= build
 OBJ_DIR = $(BUILD_DIR)/objs
 REPO_ROOT := $(shell pwd)
 
 # Source files and includes
-SRCS = main.c aes.c syscalls.c uart.c startup.s system.c sysmem.c
-INCLUDES = .
+# Source files
+SRCS = app/main.c board/system/startup.s board/system/syscalls.c board/system/sysmem.c board/system/system.c board/uart/uart.c lib/aes/aes.c
+
+# Include directories
+INCLUDES = lib/aes
+LD_FILE = board/linker/m1.ld
 
 # Flags and options
 CFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wall -std=c11 -specs=nano.specs -O0 -fdebug-prefix-map=$(REPO_ROOT)= -g -ffreestanding -ffunction-sections -fdata-sections $(foreach i,$(INCLUDES),-I$(i))
-LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T m1.ld -Wl,--gc-sections
+LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T $(LD_FILE) -Wl,--gc-sections
 QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
 
 # Object files

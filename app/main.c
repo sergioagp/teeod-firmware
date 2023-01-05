@@ -1,5 +1,5 @@
 #include <string.h>
-#include "aes.h"
+#include "../lib/aes/aes.h"
 
 // Test vectors
 static const uint8_t key[] = {
