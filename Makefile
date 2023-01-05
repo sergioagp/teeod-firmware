@@ -1,76 +1,61 @@
-REPO_ROOT := $(shell pwd)
-TARGET ?= aes-ecb-test
-BUILD_DIR ?= build
-
-SRCS = main.c aes-ecb.c syscalls.c uart.c startup.s system.c
-INCLUDES += .
-
-CROSS_COMPILE ?= arm-none-eabi-
+# Compiler and tools
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
 OCPY = $(CROSS_COMPILE)objcopy
 ODUMP = $(CROSS_COMPILE)objdump
 GDB = $(CROSS_COMPILE)gdb
-
-QEMU = qemu-system-arm
 MKDIR = mkdir
+QEMU = qemu-system-arm
 
-CFLAGS += \
-	-mthumb \
-	-march=armv6-m \
-	-mcpu=cortex-m1 \
-	-Wall \
-	-std=c11 \
-	-specs=nano.specs \
-	-O0 \
-	-fdebug-prefix-map=$(REPO_ROOT)= \
-	-g \
-	-ffreestanding \
-	-ffunction-sections \
-	-fdata-sections
+# Project name and directories
+TARGET ?= aes-ecb-test
+BUILD_DIR ?= build
+OBJ_DIR = $(BUILD_DIR)/objs
+REPO_ROOT := $(shell pwd)
 
-LDFLAGS += \
-	-mthumb \
-	-march=armv6-m \
-	-mcpu=cortex-m1 \
-	-Wl,--print-memory-usage \
-	-Wl,-Map=$(BUILD_DIR)/$(TARGET).map \
-	-T m1.ld \
-	-Wl,--gc-sections \
+# Source files and includes
+SRCS = main.c aes.c syscalls.c uart.c startup.s system.c sysmem.c
+INCLUDES = .
 
-CFLAGS += $(foreach i,$(INCLUDES),-I$(i))
-
+# Flags and options
+CFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wall -std=c11 -specs=nano.specs -O0 -fdebug-prefix-map=$(REPO_ROOT)= -g -ffreestanding -ffunction-sections -fdata-sections $(foreach i,$(INCLUDES),-I$(i))
+LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T m1.ld -Wl,--gc-sections
 QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
 
-OBJ_DIR = $(BUILD_DIR)/objs
+# Object files
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
-
+# Make targets
 .PHONY: all
-all: $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).dis
+all:
+	@echo "Building project..."
+	@$(MAKE) --no-print-directory $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).lst
 
 $(BUILD_DIR):
-	$(MKDIR) -p $(BUILD_DIR)
+	@echo "Creating build directory..."
+	@$(MKDIR) -p $(BUILD_DIR)
 
 $(OBJ_DIR):
-	$(MKDIR) -p $(OBJ_DIR)
+	@echo "Creating object directory..."
+	@$(MKDIR) -p $(OBJ_DIR)
 
 $(OBJ_DIR)/%.o: %.c $(OBJ_DIR)
-	$(MKDIR) -p $(dir $@)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	@echo "Compiling $<..."
+	@$(MKDIR) -p $(dir $@)
+	@$(CC) -c -o $@ $< $(CFLAGS)
 
 $(BUILD_DIR)/$(TARGET).bin: $(BUILD_DIR)/$(TARGET).elf
-	$(OCPY) $< $@ -O binary
+	@echo "Creating binary file..."
+	@$(OCPY) $< $@ -O binary
 
-$(BUILD_DIR)/$(TARGET).dis: $(BUILD_DIR)/$(TARGET).elf
-	$(ODUMP) -Cd -M reg-names-raw -S $< > $@
+$(BUILD_DIR)/$(TARGET).lst: $(BUILD_DIR)/$(TARGET).elf
+	@echo "Creating listing file..."
+	@$(ODUMP)  -d -M reg-names-raw -S -s $< > $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	@echo "Linking object files..."
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR)
-
-.PHONY: qemu
-qemu: $(BUILD_DIR)/$(TARGET).elf
-	$(QEMU) $(QEMU_FLAGS) -kernel $<
+	@echo "Deleting build directory..."
+	@rm -rf $(BUILD_DIR)
