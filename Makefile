@@ -12,11 +12,11 @@ TARGET ?= aes-test
 BUILD_DIR ?= build
 OBJ_DIR = $(BUILD_DIR)/objs
 REPO_ROOT := $(shell pwd)
-SUBDIR := ${sort ${dir ${wildcard ./*/ ./*/*/}}}
+SUBDIR := ${sort ${dir ${wildcard ./*/ ./*/*/ ./*/*/*/}}}
 
 # Source files and includes
 # Source files
-SRCS = $(wildcard $(addsuffix *.c,$(SUBDIR))) $(wildcard $(addsuffix *.S,$(SUBDIR)))
+SRCS = $(wildcard $(addsuffix *.[csS],$(SUBDIR)))
 # Include directories
 INCLUDES = $(SUBDIR)
 LD_FILE = board/linker/m1.ld
@@ -31,7 +31,6 @@ OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
 # Make targets
 .PHONY: all
 all:
-	@echo $(SUBDIR)
 	@echo "Building project..."
 	@$(MAKE) --no-print-directory $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).lst
 
