@@ -1,6 +1,7 @@
 {
   "files.associations": {
     "aes-ecb.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "tee_internal_api.h": "c"
   }
 }

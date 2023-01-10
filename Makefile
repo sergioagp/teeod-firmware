@@ -5,7 +5,7 @@ OCPY = $(CROSS_COMPILE)objcopy
 ODUMP = $(CROSS_COMPILE)objdump
 GDB = $(CROSS_COMPILE)gdb
 MKDIR = mkdir
-QEMU = qemu-system-arm
+# QEMU = qemu-system-arm
 
 # Project name and directories
 TARGET ?= aes-test
@@ -15,16 +15,19 @@ REPO_ROOT := $(shell pwd)
 
 # Source files and includes
 # Source files
-SRCS = app/main.c board/system/startup.s board/system/syscalls.c board/system/sysmem.c board/system/system.c board/uart/uart.c lib/aes/aes.c
-
+SRCS = board/system/startup.s board/system/syscalls.c board/system/sysmem.c board/system/system.c board/uart/uart.c
+SRCS += tee/tee_entry.c tee/tee_isr.S tee/lib/aes/aes.c
+SRCS += main.c 
+SRCS += ta_dummy/helloworld_ta.c
 # Include directories
-INCLUDES = lib/aes
+INCLUDES += ta_dummy/
+INCLUDES += tee tee/lib/aes tee/include tee/
 LD_FILE = board/linker/m1.ld
 
 # Flags and options
 CFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wall -std=c11 -specs=nano.specs -O0 -fdebug-prefix-map=$(REPO_ROOT)= -g -ffreestanding -ffunction-sections -fdata-sections $(foreach i,$(INCLUDES),-I$(i))
 LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T $(LD_FILE) -Wl,--gc-sections
-QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
+# QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
 
 # Object files
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))

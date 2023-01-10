@@ -11,10 +11,10 @@
           "servertype":"qemu",
           "cwd": "${workspaceRoot}",
           //"preLaunchTask": "Compile Build (debug)",
-          "executable": "./build/aes-ecb-test.elf",
+          "executable": "./build/aes-test.elf",
           "cpu": "cortex-m3",
           "breakAfterReset":true,
-          "runToMain": true
+          "runToMain": false
       }
   ]
 }
