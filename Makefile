@@ -12,16 +12,13 @@ TARGET ?= aes-test
 BUILD_DIR ?= build
 OBJ_DIR = $(BUILD_DIR)/objs
 REPO_ROOT := $(shell pwd)
+SUBDIR := ${sort ${dir ${wildcard ./*/ ./*/*/}}}
 
 # Source files and includes
 # Source files
-SRCS = board/system/startup.s board/system/syscalls.c board/system/sysmem.c board/system/system.c board/uart/uart.c
-SRCS += tee/tee_entry.c tee/tee_isr.S tee/lib/aes/aes.c
-SRCS += main.c 
-SRCS += ta_dummy/helloworld_ta.c
+SRCS = $(wildcard $(addsuffix *.c,$(SUBDIR))) $(wildcard $(addsuffix *.S,$(SUBDIR)))
 # Include directories
-INCLUDES += ta_dummy/
-INCLUDES += tee tee/lib/aes tee/include tee/
+INCLUDES = $(SUBDIR)
 LD_FILE = board/linker/m1.ld
 
 # Flags and options
@@ -34,6 +31,7 @@ OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
 # Make targets
 .PHONY: all
 all:
+	@echo $(SUBDIR)
 	@echo "Building project..."
 	@$(MAKE) --no-print-directory $(BUILD_DIR)/$(TARGET).bin $(BUILD_DIR)/$(TARGET).lst
 
