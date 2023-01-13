@@ -1,96 +1,43 @@
-
-#include <stdint.h>
-#include <stdio.h>
 #include "tee_entry.h"
-
-
-#include "tee_api_defines.h"
-#include "tee_api_types.h"
+#include "tee_types.h"
 #include "tee_ta_api.h"
 
+#define SHARED_MEMORY_ADDRESS 0x40000000
 
 #define UNUSED(x) (void)(x)
 
-/*
- * If tee_entry_std() is overridden, it's still supposed to call this
- * function.
- */
-uint32_t __tee_entry()
-{
-	uint32_t rv = 0xBEEF;
-
-	printf("_tee_entry\n\r");
-
-	struct mb_args *arg = (struct mb_args*) TEE_MSG_ADDR;
-
-	/* Enable foreign interrupts for STD calls */
-
-	switch (arg->cmd) {
-	case TEE_MSG_CMD_OPEN_SESSION:
-		entry_open_session(arg, arg->num_params);
-		break;
-	case TEE_MSG_CMD_CLOSE_SESSION:
-		entry_close_session(arg, arg->num_params);
-		break;
-	case TEE_MSG_CMD_INVOKE_COMMAND:
-		entry_invoke_command(arg, arg->num_params);
-		break;
-	// case TEE_MSG_CMD_CANCEL:
-	// 	entry_cancel(arg, num_params);
-	// 	break;
-	default:
-		break;
-		//EMSG("Unknown cmd 0x%x", arg->cmd);
-	}
-
-	return rv;
+void tee_entry(TA_Session *session) {
+  TEE_Result ret = TEE_SUCCESS;
+  // Parse the session structure to determine the operation
+  switch (session->operation) {
+    case TEE_OPERATION_OPEN_SESSION:
+      // Call the TA_OpenSessionEntryPoint function
+      ret = (TEE_Result) TA_OpenSessionEntryPoint((uint32_t) session->params.open_session.param_types,
+                                      (TEE_Param*) session->params.open_session.params,
+                                      (void**) &session->sess_ctx);
+      break;
+    case TEE_OPERATION_INVOKE_COMMAND:
+      // Call the TA_InvokeCommandEntryPoint function
+      ret = (TEE_Result) TA_InvokeCommandEntryPoint((void *) session->sess_ctx,
+                                       (uint32_t) session->params.invoke_command.cmd_id,
+                                       (uint32_t) session->params.invoke_command.param_types,
+                                       (TEE_Param*) session->params.invoke_command.params);
+      break;
+    case TEE_OPERATION_CLOSE_SESSION:
+      // Call the TA_CloseSessionEntryPoint function
+      TA_CloseSessionEntryPoint((void *) session->sess_ctx);
+      break;
+    default:
+      ret = TEE_ERROR_BAD_PARAMETERS;
+  }
+  // Save the return code of the operation
+  session->return_code = ret;
 }
 
-void entry_open_session(struct mb_args * arg, size_t num_params)
-{
-	UNUSED(arg);
-	UNUSED(num_params);
-	TEE_Param params[TEE_NUM_PARAMS];
-	params[0].value.a=(uint32_t) arg->param2[1];
-	params[0].value.b=(uint32_t) arg->param2[2];
-	params[1].value.a=(uint32_t) arg->param3[1];
-	params[1].value.b=(uint32_t) arg->param3[2];
-	params[2].value.a=(uint32_t) arg->param4[1];
-	params[2].value.b=(uint32_t) arg->param4[2];
-	params[3].value.a=(uint32_t) arg->param5[1];
-	params[3].value.b=(uint32_t) arg->param5[2];
-
-	printf("entry_open_session\n\r");
-	TA_OpenSessionEntryPoint((uint32_t) TEE_PARAM_TYPES(arg->param2[0],arg->param3[0],arg->param4[0],arg->param5[0]),
-				(TEE_Param *) params,
-				(void**) &arg->sess);
-	
-}
-
-void entry_close_session(struct mb_args * arg, size_t num_params)
-{
-	UNUSED(arg);
-	UNUSED(num_params);
-	printf("entry_close_session\n\r");
-	TA_CloseSessionEntryPoint((void *)&arg->sess);
-}
-
-void entry_invoke_command(struct mb_args * arg, size_t num_params)
-{
-	UNUSED(arg);
-	UNUSED(num_params);
-	TEE_Param params[TEE_NUM_PARAMS];
-	params[0].value.a=(uint32_t) arg->param0[1];
-	params[0].value.b=(uint32_t) arg->param0[2];
-	params[1].value.a=(uint32_t) arg->param1[1];
-	params[1].value.b=(uint32_t) arg->param1[2];
-	params[2].value.a=(uint32_t) arg->param2[1];
-	params[2].value.b=(uint32_t) arg->param2[2];
-	params[3].value.a=(uint32_t) arg->param3[1];
-	params[3].value.b=(uint32_t) arg->param3[2];
-	printf("entry_invoke_command\n\r");
-	TA_InvokeCommandEntryPoint((void *)&arg->sess,
-			(uint32_t)arg->cl_id,
-			(uint32_t) TEE_PARAM_TYPES(arg->param0[0],arg->param1[0],arg->param2[0],arg->param3[0]),
-			(TEE_Param*) params);
+void __tee_entry() {
+  // Get the address of the shared memory
+  TA_Session *session = (TA_Session *)SHARED_MEMORY_ADDRESS;
+  // Call the tee_entry function
+  tee_entry(session);
+  // Return to sleep
 }

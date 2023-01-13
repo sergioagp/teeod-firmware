@@ -4,7 +4,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <tee_api_defines.h>
 
 /*
  * Common Definitions
@@ -182,17 +181,5 @@ typedef struct {
 } TEE_SEAID;
 
 /* Other definitions */
-typedef uint32_t TEE_ErrorOrigin;
-typedef void *TEE_Session;
-
-#define TEE_MEM_INPUT   0x00000001
-#define TEE_MEM_OUTPUT  0x00000002
-
-#define TEE_MEMREF_0_USED  0x00000001
-#define TEE_MEMREF_1_USED  0x00000002
-#define TEE_MEMREF_2_USED  0x00000004
-#define TEE_MEMREF_3_USED  0x00000008
-
-#define TEE_SE_READER_NAME_MAX	20
 
 #endif /* TEE_API_TYPES_H */
