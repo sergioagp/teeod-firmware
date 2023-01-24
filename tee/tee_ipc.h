@@ -11,10 +11,6 @@
 #define TEE_OPERATION_CLOSE_SESSION   2
 
 typedef uint32_t TEE_Result;
-typedef struct {
-    uint32_t session_id;
-    // Other fields to keep track of the context
-} TA_Session_ctx;
 
 typedef struct {
   int type;
