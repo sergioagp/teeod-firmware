@@ -7,7 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
-#include "../uart/uart.h"
+#include "uart.h"
 
 #define UNUSED(x) (void)(x)
 
