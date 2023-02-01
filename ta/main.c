@@ -25,7 +25,7 @@ int main(void)
 {
   TEE_Operation *op = (TEE_Operation *)0x44A00000;
   printf("waiting for msg...\r\n");
-  while(op->type != 1);
+  while(op->type == 0);
   printf("Message received!\r\n");
   parse_TEE_Operation(op);
   //fflush(stdout);
