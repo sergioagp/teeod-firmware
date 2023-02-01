@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "uart.h"
 #include <tee_ipc.h>
+#include <tee_entry.h>
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -23,12 +24,15 @@ void parse_TEE_Operation(TEE_Operation *op) {
 
 int main(void)
 {
-  TEE_Operation *op = (TEE_Operation *)0x44A00000;
-  printf("waiting for msg...\r\n");
-  while(op->type == 0);
-  printf("Message received!\r\n");
-  parse_TEE_Operation(op);
-  //fflush(stdout);
+  printf("\033[2J");  // sends the ASCII escape sequence to clear the console screen
+  TEE_Operation *op = (TEE_Operation *)TEE_IPC_ADRR;
+  
   /* Loop forever */
-	for(;;);
+	for(;;) {
+    while(op->type == 0);
+    __tee_entry();
+    op->ret =  0x00000000;
+    op->type = 0;
+    //fflush(stdout);
+  }
 }

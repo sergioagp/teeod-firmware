@@ -4,7 +4,7 @@
 #include "tee_api_types.h"
 #include <stdint.h>
 
-#define TEE_IPC_ADRR  0x40000000
+#define TEE_IPC_ADRR  0x44A00000
 
 #define TEE_OPERATION_OPEN_SESSION    1
 #define TEE_OPERATION_INVOKE_COMMAND  2

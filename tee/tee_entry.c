@@ -17,7 +17,7 @@ void tee_entry(TEE_Operation *operation) {
       operation->ctx.session_id = session->session_id;
       // Call the TA_OpenSessionEntryPoint function
       ret = (TEE_Result) TA_OpenSessionEntryPoint((uint32_t) operation->par.param_types,
-                                      (TEE_Param*) operation->par.params,
+                                      (TEE_Param*) &operation->par.params,
                                       (void**) &session);
       break;
     case TEE_OPERATION_INVOKE_COMMAND:
@@ -26,7 +26,7 @@ void tee_entry(TEE_Operation *operation) {
       ret = (TEE_Result) TA_InvokeCommandEntryPoint((void *) session,
                                        (uint32_t) operation->par.cmd_id,
                                        (uint32_t) operation->par.param_types,
-                                       (TEE_Param*) operation->par.params);
+                                       (TEE_Param*) &operation->par.params);
       break;
     case TEE_OPERATION_CLOSE_SESSION:
       session = get_session(operation->ctx.session_id);

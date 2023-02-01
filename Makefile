@@ -8,7 +8,7 @@ MKDIR = mkdir
 # QEMU = qemu-system-arm
 
 # Project name and directories
-TARGET ?= aes-test
+TARGET ?= ta-test
 BUILD_DIR ?= build
 OBJ_DIR = $(BUILD_DIR)/objs
 REPO_ROOT := $(shell pwd)

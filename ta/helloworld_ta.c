@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #define __maybe_unused
-#define DMSG    printf
-#define IMSG    printf
+#define DMSG    printf("\r\nDMSG::"); printf
+#define IMSG    printf("\r\nIMSG::"); printf
 
 /*
  * Called when the instance of the TA is created. This is the first call in
@@ -13,7 +13,7 @@
  */
 TEE_Result TA_CreateEntryPoint(void)
 {
-
+	DMSG("TA_CreateEntryPoint has been called");
 
 	return TEE_SUCCESS;
 }
@@ -24,7 +24,7 @@ TEE_Result TA_CreateEntryPoint(void)
  */
 void TA_DestroyEntryPoint(void)
 {
-
+	DMSG("TA_DestroyEntryPoint has been called");
 }
 
 /*
@@ -42,7 +42,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-
+	DMSG("TA_OpenSessionEntryPoint has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
@@ -55,7 +55,7 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 	 * The DMSG() macro is non-standard, TEE Internal API doesn't
 	 * specify any means to logging from a TA.
 	 */
-
+	IMSG("Hello New World!\n");
 
 	/* If return value != TEE_SUCCESS the session will not be created. */
 	return TEE_SUCCESS;
@@ -68,22 +68,24 @@ TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
 void TA_CloseSessionEntryPoint(void __maybe_unused *sess_ctx)
 {
 	(void)&sess_ctx; /* Unused parameter */
-
+	IMSG("Goodbye!\n");
 }
 
 static TEE_Result inc_value(uint32_t param_types,
 	TEE_Param params[4])
 {
-  (void)&params;
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
-
+	DMSG("inc_value has been called");
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
+
+	IMSG("Got value: %u from NW", params[0].value.a);
+	params[0].value.a++;
+	IMSG("Increase value to: %u", params[0].value.a);
 
 	return TEE_SUCCESS;
 }
@@ -91,16 +93,19 @@ static TEE_Result inc_value(uint32_t param_types,
 static TEE_Result dec_value(uint32_t param_types,
 	TEE_Param params[4])
 {
-  (void)&params;
 	uint32_t exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INOUT,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE,
 						   TEE_PARAM_TYPE_NONE);
 
-	DMSG("has been called");
+	DMSG("dec_value has been called");
 
 	if (param_types != exp_param_types)
 		return TEE_ERROR_BAD_PARAMETERS;
+
+	IMSG("Got value: %u from NW", params[0].value.a);
+	params[0].value.a--;
+	IMSG("Decrease value to: %u", params[0].value.a);
 
 	return TEE_SUCCESS;
 }
@@ -114,7 +119,6 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 			uint32_t param_types, TEE_Param params[4])
 {
 	(void)&sess_ctx; /* Unused parameter */
-
 	switch (cmd_id) {
 	case TA_HELLO_WORLD_CMD_INC_VALUE:
 		return inc_value(param_types, params);

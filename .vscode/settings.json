@@ -3,6 +3,7 @@
     "aes-ecb.h": "c",
     "string.h": "c",
     "tee_internal_api.h": "c",
-    "inttypes.h": "c"
+    "inttypes.h": "c",
+    "tee_entry.h": "c"
   }
 }
