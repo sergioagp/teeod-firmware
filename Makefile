@@ -8,8 +8,8 @@ MKDIR = mkdir
 # QEMU = qemu-system-arm
 
 # Project name and directories
-TARGET ?= ta-test
-BUILD_DIR ?= build
+TARGET ?= $(target-app)
+BUILD_DIR ?= $(build-dir-app)
 OBJ_DIR = $(BUILD_DIR)/objs
 REPO_ROOT := $(shell pwd)
 SUBDIR := ${sort ${dir ${wildcard ./*/ ./*/*/ ./*/*/*/}}}
@@ -17,9 +17,14 @@ SUBDIR := ${sort ${dir ${wildcard ./*/ ./*/*/ ./*/*/*/}}}
 # Source files and includes
 # Source files
 SRCS = $(wildcard $(addsuffix *.[csS],$(SUBDIR)))
+
 # Include directories
 INCLUDES = $(SUBDIR)
 LD_FILE = board/linker/m1.ld
+
+#Application files and includes
+SRCS += $(repo-dir-app)/$(srcs-app)
+INCLUDES += $(repo-dir-app)/$(inc-app)
 
 # Flags and options
 CFLAGS += -Wall -Wextra -g -Wno-format -mthumb -march=armv6-m -mcpu=cortex-m1	-Wall -std=c11 -specs=nano.specs -O0 -fdebug-prefix-map=$(REPO_ROOT)= -g -ffreestanding -ffunction-sections -fdata-sections $(foreach i,$(INCLUDES),-I$(i)) $(foreach d,$(DEFINES),-D$(d))
