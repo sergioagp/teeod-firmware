@@ -41,7 +41,8 @@ int main() {
   printf("\033[2J");  // sends the ASCII escape sequence to clear the console screen
   TEE_Result res;
   TEE_ObjectHandle object;
-
+  TEE_Time strt_time, end_time;
+  TEE_GetSystemTime(&strt_time);
   // Create persistent object
   res = TEE_CreatePersistentObject(TEST_STORAGE_ID, TEST_OBJECT_ID, TEST_OBJECT_ID_LEN, TEST_FLAGS,
   TEST_ATTRIBUTES, TEST_INITIAL_DATA, TEST_INITIAL_DATA_LEN, &object);
@@ -96,7 +97,7 @@ int main() {
   if (res != TEE_SUCCESS) {
     printf("Error in closing and deleting persistent object: %x\n", res);
   }
-
+  TEE_GetSystemTime(&end_time);
   tee_service_routine();
   return 0;
 }
