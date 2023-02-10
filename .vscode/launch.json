@@ -11,7 +11,7 @@
           "servertype":"qemu",
           "cwd": "${workspaceRoot}",
           //"preLaunchTask": "Compile Build (debug)",
-          "executable": "./build/aes-test.elf",
+          "executable": "./build/ta-test.elf",
           "cpu": "cortex-m3",
           "breakAfterReset":true,
           "runToMain": false
