@@ -181,5 +181,10 @@ typedef struct {
 } TEE_SEAID;
 
 /* Other definitions */
+typedef struct {
+void* address;
+uint32_t size;
+uint32_t currpos;
+} TEE_DataHandle;
 
 #endif /* TEE_API_TYPES_H */

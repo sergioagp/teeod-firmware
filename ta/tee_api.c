@@ -3,6 +3,14 @@
 #include <tee_api.h>
 #include <tee_api_defines.h>
 
+TEE_Result TEE_CheckMemoryAccessRights(uint32_t accessFlags, void *buffer,
+				       uint32_t size) {
+  (void) accessFlags;
+  (void) buffer;
+  (void) size;
+  return TEE_SUCCESS;
+}
+
 int32_t TEE_MemCompare(const void *buffer1, const void *buffer2, uint32_t size)
 {
     const unsigned char *ptr1 = buffer1;

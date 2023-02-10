@@ -46,8 +46,52 @@ TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
 
 void TEE_GetSystemTime(TEE_Time *time);
 
+/* Cryptographic Operations API - Generic Operation Functions */
 
-/* System API - Memory Management */
+TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation,
+				 uint32_t algorithm, uint32_t mode,
+				 uint32_t maxKeySize);
+
+TEE_Result TEE_SetOperationKey(TEE_OperationHandle operation,
+			       TEE_ObjectHandle key);
+
+TEE_Result TEE_SetOperationKey2(TEE_OperationHandle operation,
+				TEE_ObjectHandle key1, TEE_ObjectHandle key2);
+
+void TEE_FreeOperation(TEE_OperationHandle operation);
+
+/* Data and Key Storage API  - Transient Object Functions */
+TEE_Result TEE_AllocateTransientObject(TEE_ObjectType objectType,
+				       uint32_t maxKeySize,
+				       TEE_ObjectHandle *object);
+
+void TEE_FreeTransientObject(TEE_ObjectHandle object);
+
+TEE_Result TEE_PopulateTransientObject(TEE_ObjectHandle object,
+				       const TEE_Attribute *attrs,
+				       uint32_t attrCount);
+
+/* Cryptographic Operations API - Message Digest Functions */
+
+TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk,
+			     uint32_t chunkLen, void *hash, uint32_t *hashLen);
+
+
+
+/* Cryptographic Operations API - Symmetric Cipher Functions */
+
+void TEE_CipherInit(TEE_OperationHandle operation, const void *IV,
+		    uint32_t IVLen);
+
+TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
+			    uint32_t srcLen, void *destData, uint32_t *destLen);
+
+TEE_Result TEE_CipherDoFinal(TEE_OperationHandle operation,
+			     const void *srcData, uint32_t srcLen,
+			     void *destData, uint32_t *destLen);/* System API - Memory Management */
+TEE_Result TEE_CheckMemoryAccessRights(uint32_t accessFlags, void *buffer,
+				       uint32_t size);
+
 void *TEE_Malloc(uint32_t size, uint32_t hint);
 
 void *TEE_Realloc(void *buffer, uint32_t newSize);

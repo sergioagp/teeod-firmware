@@ -4,12 +4,6 @@
 #include <tee_api_defines.h>
 #include <tee_sharedmem.h>
 
-typedef struct {
-void* address;
-uint32_t size;
-uint32_t currpos;
-} TEE_DataHandle;
-
 /* Data and Key Storage API  - Persistent Object Functions */
 TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
                                       uint32_t objectIDLen, uint32_t flags,
@@ -72,7 +66,10 @@ void TEE_CloseObject(TEE_ObjectHandle object) {
 }
 
 TEE_Result TEE_CloseAndDeletePersistentObject1(TEE_ObjectHandle object) {
-  (void) object;
+  TEE_DataHandle *obj = (TEE_DataHandle*)object;
+
+  free(obj->address);
+  free(obj);
   return TEE_SUCCESS; 
 }
 
@@ -153,6 +150,46 @@ TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
     default:
         return TEE_ERROR_BAD_PARAMETERS;
   }
+
+  return TEE_SUCCESS;
+}
+
+TEE_Result TEE_AllocateTransientObject(TEE_ObjectType objectType,
+				       uint32_t maxKeySize,
+				       TEE_ObjectHandle *object) {
+  
+  if(objectType != TEE_TYPE_AES) {
+    return TEE_ERROR_NOT_IMPLEMENTED;
+  }
+  
+  TEE_DataHandle *obj = malloc(sizeof(TEE_DataHandle));
+  
+  obj->address = (uint8_t*) malloc(sizeof(maxKeySize));
+  obj->size = maxKeySize;
+  *object = (TEE_ObjectHandle)obj;
+
+  return TEE_SUCCESS;
+}
+
+void TEE_FreeTransientObject(TEE_ObjectHandle object) {
+  TEE_DataHandle *obj = (TEE_DataHandle*)object;
+
+  free(obj->address);
+  free(obj);
+}
+
+
+TEE_Result TEE_PopulateTransientObject(TEE_ObjectHandle object,
+				       const TEE_Attribute *attrs,
+				       uint32_t attrCount) {
+  (void) attrCount;
+  if (!attrs || !object) {
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
+
+  TEE_DataHandle *obj = (TEE_DataHandle*) object;
+
+  memcpy(obj->address, attrs->content.ref.buffer, attrs->content.ref.length);
 
   return TEE_SUCCESS;
 }

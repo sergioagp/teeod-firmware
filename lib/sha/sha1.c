@@ -14,7 +14,7 @@
 #define K3 0x8F1BBCDC
 #define K4 0xCA62C1D6
 
-void SHA1_Init(SHA1_CTX *context) {
+void sha1_Init(SHA1_CTX *context) {
   // Initialize the intermediate state of the SHA-1 hash function
   context->state[0] = 0x67452301;
   context->state[1] = 0xEFCDAB89;
@@ -29,7 +29,7 @@ void SHA1_Init(SHA1_CTX *context) {
   memset(context->buffer, 0, SHA1_BLOCK_SIZE);
 }
 
-void SHA1_Transform(uint32_t state[5], const uint8_t block[SHA1_BLOCK_SIZE]) {
+void sha1_Transform(uint32_t state[5], const uint8_t block[SHA1_BLOCK_SIZE]) {
   uint32_t a, b, c, d, e;
   uint32_t w[80];
 
@@ -81,7 +81,7 @@ void SHA1_Transform(uint32_t state[5], const uint8_t block[SHA1_BLOCK_SIZE]) {
   state[4] += e;
 }
 
-void SHA1_Update(SHA1_CTX *context, const uint8_t *data, size_t len) {
+void sha1_Update(SHA1_CTX *context, const uint8_t *data, size_t len) {
   size_t i;
 
   // Update the count of the number of bytes processed
@@ -89,7 +89,7 @@ void SHA1_Update(SHA1_CTX *context, const uint8_t *data, size_t len) {
 
   // Process as many complete blocks as possible
   for (i = 0; i + SHA1_BLOCK_SIZE <= len; i += SHA1_BLOCK_SIZE) {
-    SHA1_Transform(context->state, data + i);
+    sha1_Transform(context->state, data + i);
   }
 
   // Save the remaining bytes in the input buffer
@@ -97,13 +97,13 @@ void SHA1_Update(SHA1_CTX *context, const uint8_t *data, size_t len) {
   memcpy(context->buffer, data + i, remaining);
 }
 
-void SHA1_Final(SHA1_CTX *context, uint8_t digest[SHA1_DIGEST_SIZE]) {
+void sha1_Final(SHA1_CTX *context, uint8_t digest[SHA1_DIGEST_SIZE]) {
   // Pad the input data with a single "1" bit and as many "0" bits as necessary
   size_t index = context->count % SHA1_BLOCK_SIZE;
   context->buffer[index++] = 0x80;
   if (index > SHA1_BLOCK_SIZE - 8) {
     memset(context->buffer + index, 0, SHA1_BLOCK_SIZE - index);
-    SHA1_Transform(context->state, context->buffer);
+    sha1_Transform(context->state, context->buffer);
     memset(context->buffer, 0, SHA1_BLOCK_SIZE);
   } else {
     memset(context->buffer + index, 0, SHA1_BLOCK_SIZE - 8 - index);
@@ -119,7 +119,7 @@ void SHA1_Final(SHA1_CTX *context, uint8_t digest[SHA1_DIGEST_SIZE]) {
   context->buffer[61] = count >> 16;
   context->buffer[62] = count >> 8;
   context->buffer[63] = count;
-  SHA1_Transform(context->state, context->buffer);
+  sha1_Transform(context->state, context->buffer);
 
   // Return the final SHA-1 hash
   for (size_t i = 0; i < 5; i++) {
