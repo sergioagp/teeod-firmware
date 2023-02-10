@@ -4,37 +4,47 @@
 #include <tee_api_defines.h>
 #include <tee_sharedmem.h>
 
+typedef struct {
+void* address;
+uint32_t size;
+uint32_t currpos;
+} TEE_DataHandle;
+
 /* Data and Key Storage API  - Persistent Object Functions */
 TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
-				      uint32_t objectIDLen, uint32_t flags,
-				      TEE_ObjectHandle attributes,
-				      const void *initialData,
-				      uint32_t initialDataLen,
-				      TEE_ObjectHandle *object) {
-  // Validate input parameters
-  if (objectID == NULL || objectIDLen == 0 || object == NULL) {
-    return TEE_ERROR_BAD_PARAMETERS;
-  }
+                                      uint32_t objectIDLen, uint32_t flags,
+                                      TEE_ObjectHandle attributes,
+                                      const void *initialData,
+                                      uint32_t initialDataLen,
+                                      TEE_ObjectHandle *object) {
 
-  // Check storage ID
-  if (storageID != TEE_STORAGE_PRIVATE) {
-    return TEE_ERROR_BAD_PARAMETERS;
-  }
+  (void) storageID;
+  (void) flags;
+  (void) attributes;
+  // Check if the input parameters are valid
+  if (!objectID || !initialData || !object)
+  return TEE_ERROR_BAD_PARAMETERS;
 
-  //TODO: Check if object already exists
+  // Check if the objectID length is within the allowed range
+  if (objectIDLen > TEE_SECURE_STORAGE_SIZE)
+  return TEE_ERROR_BAD_PARAMETERS;
 
-  // Create new object
-  TEE_Attribute* newObject = malloc(sizeof( TEE_Attribute));
-  newObject->attributeID = storageID;
-  newObject->content.ref.buffer = (uint32_t*) TEE_SECURE_STORAGE_MEM;
+  // Allocate memory for the TEE_DataHandle object
+  TEE_DataHandle *objdata = (TEE_DataHandle *)malloc(sizeof(TEE_DataHandle));
+  if (!objdata)
+  return TEE_ERROR_OUT_OF_MEMORY;
 
-  // Set object attributes if provided
+  // Allocate memory for the object data
+  objdata->address = (uint8_t*) malloc(sizeof(initialDataLen));
+  // Copy the initial data to the object
+  memcpy((uint8_t *) objdata->address, (uint8_t *) initialData, initialDataLen);
 
-  // Persist object
+  // Set the size and current position of the object
+  objdata->size = initialDataLen;
+  objdata->currpos = 0;
 
-
-  // Return object handle
-  *object = (TEE_ObjectHandle*) newObject;
+  // Set the object handle to point to the TEE_DataHandle object
+  *object = (TEE_ObjectHandle)objdata;
 
   return TEE_SUCCESS;
 }
@@ -43,68 +53,106 @@ TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
 TEE_Result TEE_OpenPersistentObject(uint32_t storageID, const void *objectID,
 				                            uint32_t objectIDLen, uint32_t flags,
 				                            TEE_ObjectHandle *object) {
-  // Create new object
-  TEE_Attribute* newObject = malloc(sizeof( TEE_Attribute));
-  newObject->attributeID = storageID;
-  newObject->content.ref.buffer = (uint32_t*) TEE_SECURE_STORAGE_MEM;
-  newObject->content.ref.length = 0;
-  // Set object attributes if provided
+  (void) storageID;
+  (void) objectID;
+  (void) objectIDLen;
+  (void) flags;
 
-  // Persist object
-
-
-  // Return object handle
-  *object = (TEE_ObjectHandle*) newObject;
-
+  // Set the initial data position in the data stream to 0
+  TEE_DataHandle *objdata = (TEE_DataHandle *) (void*) object;
+  objdata->currpos = 0;
+  // Set the handle with the opened object
+  // Return TEE_SUCCESS
   return TEE_SUCCESS;
-
 }
 
 
 void TEE_CloseObject(TEE_ObjectHandle object) {
-
+  (void) object;
 }
 
 TEE_Result TEE_CloseAndDeletePersistentObject1(TEE_ObjectHandle object) {
-
+  (void) object;
+  return TEE_SUCCESS; 
 }
 
 
 /* Data and Key Storage API  - Data Stream Access Functions */
 
-TEE_Result TEE_ReadObjectData(TEE_ObjectHandle object, void *buffer,
-			      uint32_t size, uint32_t *count) {
-    if (!object || !buffer || !count) {
-        return TEE_ERROR_BAD_PARAMETERS;
-    }
-    
-    TEE_Attribute* object_ptr = (TEE_Attribute* )object;
-    if (object_ptr->content.ref.length > size) {
-        memcpy(buffer, (uint32_t*)object_ptr->content.ref.buffer, size);
-        *count = size;
-    } else {
-        memcpy(buffer, object_ptr->content.ref.buffer, object_ptr->content.ref.length);
-        *count = object_ptr->content.ref.length;
-    }
-    
-    return TEE_SUCCESS;
-}
+TEE_Result TEE_ReadObjectData(TEE_ObjectHandle object, void *buffer, uint32_t size, uint32_t *count) {
 
-TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer,
-			       uint32_t size) {
-  if (!object || !buffer) {
-      return TEE_ERROR_BAD_PARAMETERS;
+  TEE_DataHandle *objdata = (TEE_DataHandle *)(void*)  object;
+  if (!objdata->address || !buffer) {
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
+  if (objdata->currpos >= objdata->size) {
+  *count = 0;
+    return TEE_SUCCESS;
   }
 
-  TEE_Attribute* object_ptr = (TEE_Attribute* ) object;
-  
-  memcpy(object_ptr->content.ref.buffer, buffer, size);
-  object_ptr->content.ref.length += size;
+  uint32_t bytes_to_read = objdata->size - objdata->currpos;
+  if (bytes_to_read > size) {
+    bytes_to_read = size;
+  }
+
+  memcpy((uint8_t *) buffer, (uint8_t *) objdata->address + objdata->currpos, bytes_to_read);
+  objdata->currpos += bytes_to_read;
+  *count = bytes_to_read;
 
   return TEE_SUCCESS;
 }
 
+TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer,
+			       uint32_t size) {
+
+  TEE_DataHandle *objdata = (TEE_DataHandle *) (void*) object;
+  if (!objdata->address || !buffer) {
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
+  if (objdata->currpos + size > TEE_SECURE_STORAGE_SIZE) {
+    return TEE_ERROR_OVERFLOW;
+  }
+
+  // Copy the data from buffer to the object
+  memcpy((uint8_t *) objdata->address + objdata->currpos, (uint8_t *) buffer, size);
+
+  // Update the current position
+  objdata->currpos += size;
+
+  return TEE_SUCCESS;
+}
+
+
 TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
 			      TEE_Whence whence) {
+  if (!object) {
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
 
+  TEE_DataHandle *objdata = (TEE_DataHandle *) (void*) object;
+
+  switch (whence) {
+    case TEE_DATA_SEEK_SET:
+        if (offset > TEE_SECURE_STORAGE_SIZE)
+            return TEE_ERROR_OVERFLOW;
+        else
+            objdata->currpos = offset;
+        break;
+    case TEE_DATA_SEEK_CUR:
+        if (objdata->currpos + offset > TEE_SECURE_STORAGE_SIZE)
+            return TEE_ERROR_OVERFLOW;
+        else
+            objdata->currpos += offset;
+        break;
+    case TEE_DATA_SEEK_END:
+        if (objdata->size + offset > TEE_SECURE_STORAGE_SIZE)
+            return TEE_ERROR_OVERFLOW;
+        else
+            objdata->currpos = objdata->size + offset;
+        break;
+    default:
+        return TEE_ERROR_BAD_PARAMETERS;
+  }
+
+  return TEE_SUCCESS;
 }

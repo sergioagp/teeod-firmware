@@ -42,6 +42,11 @@ TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer,
 TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
 			      TEE_Whence whence);
 
+/* Date & Time API */
+
+void TEE_GetSystemTime(TEE_Time *time);
+
+
 /* System API - Memory Management */
 void *TEE_Malloc(uint32_t size, uint32_t hint);
 
