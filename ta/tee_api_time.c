@@ -5,14 +5,17 @@
 /* Date & Time API */
 
 #include <stdint.h>
+#define SYSTICK_VAL  (*((volatile uint32_t *)0xE000E018))
 
-#define SYSTICK_CTRL (*(volatile uint32_t )0xE000E010)
-#define SYSTICK_LOAD ((volatile uint32_t )0xE000E014)
-#define SYSTICK_VAL ((volatile uint32_t )0xE000E018)
-#define SYSTICK_CALIB ((volatile uint32_t *)0xE000E01C)
+extern uint32_t systick_counter_ms;
+// Get System Time Function
+void TEE_GetSystemTime(TEE_Time *time) {
+    printf("Atual value of systick_counter_ms: %d", systick_counter_ms);
+    printf("Atual value of SYSTICK_VAL: 0x%x", SYSTICK_VAL);
+    // Get Milliseconds Counter
+    uint32_t ms = systick_counter_ms;
 
-void TEE_GetSystemTime(TEE_Time *time)
-{
-  time->seconds = SYSTICK_VAL / 10000000;
-  time->millis = (SYSTICK_VAL % 10000000) / 10;
+    // Fill TEE_Time Structure
+    time->seconds = ms / 1000;
+    time->millis = ms % 1000;
 }

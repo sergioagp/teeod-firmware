@@ -16,7 +16,6 @@ void tee_service_routine()
 	for(;;) {
     while(op->type == 0);
     __tee_entry();
-    op->ret =  0x00000000;
     op->type = 0;
     //fflush(stdout);
   }

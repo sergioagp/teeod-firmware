@@ -2,7 +2,7 @@
 .cpu cortex-m0
 .fpu softvfp
 .thumb
-
+.extern ms_count
 .global g_pfnVectors
 .global Default_Handler
 
@@ -193,8 +193,8 @@ g_pfnVectors:
 	.weak	PendSV_Handler
 	.thumb_set PendSV_Handler,Default_Handler
 
-	.weak	SysTick_Handler
-	.thumb_set SysTick_Handler,Default_Handler
+	@ .weak	SysTick_Handler
+	@ .thumb_set SysTick_Handler,Default_Handler
 
 	.weak	WWDG_IRQHandler
 	.thumb_set WWDG_IRQHandler,Default_Handler
