@@ -11,4 +11,19 @@
 #include <tee_api_types.h>
 #include <tee_ta_api.h>
 
+#ifdef DEBUG_MODE
+#include <stdio.h>
+#endif
+
+// Define the DMSG and IMSG macros
+#ifdef DEBUG_MODE
+#define DMSG(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
+#define IMSG(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
+#define EMSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
+#else
+#define DMSG(fmt, ...)
+#define IMSG(fmt, ...)
+#define EMSG(fmt, ...)
+#endif
+
 #endif
