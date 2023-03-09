@@ -31,6 +31,8 @@ CFLAGS += -Wall -Wextra -g -Wno-format -mthumb -march=armv6-m -mcpu=cortex-m1	-W
 LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T $(LD_FILE) -Wl,--gc-sections
 # QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
 
+CFLAGS += -DDEBUG_MODE
+
 # Object files
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
 # Make targets

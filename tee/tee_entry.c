@@ -36,6 +36,7 @@ void tee_entry(TEE_Operation *operation) {
       delete_session(operation->ctx.session_id);
       break;
     default:
+      EMSG("Invalid operation type: %d", operation->type);
       ret = TEE_ERROR_BAD_PARAMETERS;
   }
   // Save the return code of the operation

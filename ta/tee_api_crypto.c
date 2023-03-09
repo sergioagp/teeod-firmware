@@ -29,9 +29,10 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
   case TEE_ALG_AES_CTR:
   case TEE_ALG_AES_XTS:
     if (op == NULL) {
+      EMSG("TEE_AllocateOperation: out of memory");
       return TEE_ERROR_OUT_OF_MEMORY;
     }
-    memset(op, 0, sizeof(struct AES_ctx));
+    memset(op, 0, sizeof(Crypto_Operation));
     op->algorithm = algorithm;
     op->mode = mode;
     op->maxKeySize = maxKeySize;
@@ -42,9 +43,11 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
   case TEE_ALG_SHA1:
   case TEE_ALG_SHA256:
     if (mode != TEE_MODE_DIGEST) {
+      EMSG("TEE_AllocateOperation: bad parameters");
       return TEE_ERROR_NOT_SUPPORTED;
     }
     if (op == NULL) {
+      EMSG("TEE_AllocateOperation: out of memory");
       return TEE_ERROR_OUT_OF_MEMORY;
     }
 
@@ -63,6 +66,7 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
     return TEE_SUCCESS;
     break;  
   default:
+    EMSG("TEE_AllocateOperation: bad parameters");
     return TEE_ERROR_NOT_SUPPORTED;
   }
 }
@@ -79,6 +83,7 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
   Crypto_Operation *op = (Crypto_Operation *)operation;
 
   if (!op || !hash || !hashLen) {
+    EMSG("TEE_DigestDoFinal: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
 
@@ -86,9 +91,10 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
     case TEE_ALG_SHA1:
       if (*hashLen < SHA1_DIGEST_SIZE) {
         *hashLen = SHA1_DIGEST_SIZE;
+        EMSG("TEE_DigestDoFinal: short buffer");
         return TEE_ERROR_SHORT_BUFFER;
       }
-
+      // IMSG("TEE_DigestDoFinal: SHA1");
       sha1_Update(&op->sha1_ctx, chunk, chunkLen);
       sha1_Final(&op->sha1_ctx, hash);
       *hashLen = SHA1_DIGEST_SIZE;
@@ -97,15 +103,17 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
     case TEE_ALG_SHA256:
       if (*hashLen < SHA256_BLOCK_SIZE) {
         *hashLen = SHA256_BLOCK_SIZE;
+        EMSG("TEE_DigestDoFinal: short buffer");
         return TEE_ERROR_SHORT_BUFFER;
       }
-
+      // IMSG("TEE_DigestDoFinal: SHA256");
       sha256_update(&op->sha256_ctx, chunk, chunkLen);
       sha256_final(&op->sha256_ctx, hash);
       *hashLen = SHA256_BLOCK_SIZE;
       break;
 
     default:
+      EMSG("TEE_DigestDoFinal: bad parameters");
       return TEE_ERROR_NOT_IMPLEMENTED;
   }
 
@@ -116,6 +124,7 @@ TEE_Result TEE_SetOperationKey(TEE_OperationHandle operation,
 			       TEE_ObjectHandle key) {
 
   if (!operation || !key) {
+    EMSG("TEE_SetOperationKey: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
   Crypto_Operation *op = (Crypto_Operation *)operation;
@@ -131,6 +140,7 @@ TEE_Result TEE_SetOperationKey(TEE_OperationHandle operation,
     return TEE_SUCCESS;
     break;
   default:
+    EMSG("TEE_SetOperationKey: bad parameters");
     return TEE_ERROR_NOT_SUPPORTED;
   }
 
@@ -141,6 +151,7 @@ TEE_Result TEE_SetOperationKey2(TEE_OperationHandle operation,
 				TEE_ObjectHandle key1, TEE_ObjectHandle key2){
 
   if (!operation || !key1 || !key2) {
+    EMSG("TEE_SetOperationKey2: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
   Crypto_Operation *op = (Crypto_Operation *)operation;
@@ -159,6 +170,7 @@ TEE_Result TEE_SetOperationKey2(TEE_OperationHandle operation,
     return TEE_SUCCESS;
     break;
   default:
+    EMSG("TEE_SetOperationKey2: bad parameters");
     return TEE_ERROR_NOT_SUPPORTED;
   }
 
@@ -193,6 +205,7 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
   (void) destLen;
   
   if (!operation || !srcData || !destData) {
+    EMSG("TEE_CipherUpdate: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
 
@@ -213,6 +226,7 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
   case TEE_ALG_AES_XTS:
     break;
   default:
+    EMSG("TEE_CipherUpdate: bad parameters");
     return TEE_ERROR_NOT_SUPPORTED;
   }
 

@@ -19,17 +19,23 @@ TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
   (void) flags;
   (void) attributes;
   // Check if the input parameters are valid
-  if (!objectID || !object)
-  return TEE_ERROR_BAD_PARAMETERS;
+  if (!objectID || !object) {
+    EMSG("TEE_CreatePersistentObject: bad parameters");
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
 
   // Check if the objectID length is within the allowed range
-  if (objectIDLen > TEE_SECURE_STORAGE_SIZE)
-  return TEE_ERROR_BAD_PARAMETERS;
+  if (objectIDLen > TEE_SECURE_STORAGE_SIZE){
+    EMSG("TEE_CreatePersistentObject: bad parameters");
+    return TEE_ERROR_BAD_PARAMETERS;
+  }
 
   // Allocate memory for the TEE_DataHandle object
   //TEE_DataHandle *objdata = (TEE_DataHandle *)malloc(sizeof(TEE_DataHandle));
-  if (!objdata)
-  return TEE_ERROR_OUT_OF_MEMORY;
+  if (!objdata) {
+    EMSG("TEE_CreatePersistentObject: out of memory");
+    return TEE_ERROR_OUT_OF_MEMORY;
+  }
 
   if(initialData) {
     // Allocate memory for the object data
@@ -96,6 +102,7 @@ TEE_Result TEE_ReadObjectData(TEE_ObjectHandle object, void *buffer, uint32_t si
 
   TEE_DataHandle *objdata = (TEE_DataHandle *)(void*)  object;
   if (!objdata->address || !buffer) {
+    EMSG("TEE_ReadObjectData: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
   if (objdata->currpos >= objdata->size) {
@@ -120,6 +127,7 @@ TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer, uint
   TEE_DataHandle *objdata = (TEE_DataHandle *) (void*) object;
   
   if (!buffer) {
+    EMSG("TEE_WriteObjectData: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
 
@@ -129,6 +137,7 @@ TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer, uint
   }
 
   if (objdata->currpos + size > TEE_SECURE_STORAGE_SIZE) {
+    EMSG("TEE_WriteObjectData: overflow");
     return TEE_ERROR_OVERFLOW;
   }
 
@@ -139,6 +148,7 @@ TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer, uint
       free(objdata->address);
       objdata->address = NULL;
       objdata->size = 0;
+      EMSG("TEE_WriteObjectData: out of memory");
       return TEE_ERROR_OUT_OF_MEMORY;
     }
     objdata->address = new_address;
@@ -155,6 +165,7 @@ TEE_Result TEE_WriteObjectData(TEE_ObjectHandle object, const void *buffer, uint
 TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
 			      TEE_Whence whence) {
   if (!object) {
+    EMSG("TEE_SeekObjectData: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
 
@@ -162,24 +173,28 @@ TEE_Result TEE_SeekObjectData(TEE_ObjectHandle object, int32_t offset,
 
   switch (whence) {
     case TEE_DATA_SEEK_SET:
-        if (offset > TEE_SECURE_STORAGE_SIZE)
+        if (offset > TEE_SECURE_STORAGE_SIZE) {
+            EMSG("TEE_SeekObjectData: overflow");
             return TEE_ERROR_OVERFLOW;
-        else
+        } else
             objdata->currpos = offset;
         break;
     case TEE_DATA_SEEK_CUR:
-        if (objdata->currpos + offset > TEE_SECURE_STORAGE_SIZE)
+        if (objdata->currpos + offset > TEE_SECURE_STORAGE_SIZE) {
+            EMSG("TEE_SeekObjectData: overflow");
             return TEE_ERROR_OVERFLOW;
-        else
+        } else
             objdata->currpos += offset;
         break;
     case TEE_DATA_SEEK_END:
-        if (objdata->size + offset > TEE_SECURE_STORAGE_SIZE)
+        if (objdata->size + offset > TEE_SECURE_STORAGE_SIZE) {
+            EMSG("TEE_SeekObjectData: overflow");
             return TEE_ERROR_OVERFLOW;
-        else
+        } else
             objdata->currpos = objdata->size + offset;
         break;
     default:
+        EMSG("TEE_SeekObjectData: bad parameters");
         return TEE_ERROR_BAD_PARAMETERS;
   }
 
@@ -191,6 +206,7 @@ TEE_Result TEE_AllocateTransientObject(TEE_ObjectType objectType,
 				       TEE_ObjectHandle *object) {
   
   if(objectType != TEE_TYPE_AES) {
+    EMSG("TEE_AllocateTransientObject: bad parameters");
     return TEE_ERROR_NOT_IMPLEMENTED;
   }
   
@@ -216,6 +232,7 @@ TEE_Result TEE_PopulateTransientObject(TEE_ObjectHandle object,
 				       uint32_t attrCount) {
   (void) attrCount;
   if (!attrs || !object) {
+    EMSG("TEE_PopulateTransientObject: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
   }
 

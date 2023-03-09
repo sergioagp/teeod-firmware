@@ -6,9 +6,6 @@
 #include <tee_api_defines.h>
 #include <tee_api_types.h>
 #include <stdio.h>
-#define IMSG printf
-#define DMSG printf
-#define EMSG printf
 //tee_internal_api_extensions.h:
 /* Hint implementation defines */
 #define TEE_USER_MEM_HINT_NO_FILL_ZERO       0x80000000

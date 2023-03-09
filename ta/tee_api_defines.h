@@ -485,4 +485,21 @@
 
 #define TEE_BigIntSizeInU32(n) ((((n)+31)/32)+2)
 
+
+
+#ifdef DEBUG_MODE
+#include <stdio.h>
+#endif
+
+// Define the DMSG and IMSG macros
+#ifdef DEBUG_MODE
+#define DMSG(fmt, ...) printf("[DEBUG] " fmt "\r\n", ##__VA_ARGS__)
+#define IMSG(fmt, ...) printf("[INFO] " fmt "\r\n", ##__VA_ARGS__)
+#define EMSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\r\n", ##__VA_ARGS__)
+#else
+#define DMSG(fmt, ...)
+#define IMSG(fmt, ...)
+#define EMSG(fmt, ...)
+#endif
+
 #endif /* TEE_API_DEFINES_H */

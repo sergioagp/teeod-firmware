@@ -6,6 +6,9 @@
 .global g_pfnVectors
 .global Default_Handler
 
+/* function to print error message to UART0 */
+.extern print_uart0
+
 /* start address for the initialization values of the .data section.
 defined in linker script */
 .word _sidata
@@ -82,35 +85,39 @@ LoopForever:
 .weak HardFault_Handler
 .type HardFault_Handler, %function
 HardFault_Handler:
-	movs	r0, #4
-	mov		r1, lr
-	tst		r0, r1
-	beq		stacking_used_MSP
-	mrs 	r0, psp				// first parameter - stacking was using PSP
-	b		get_LR_and_branch
+  ldr r0, =hard_fault_message
+  bl print_uart0
+  movs	r0, #4
+  mov		r1, lr
+  tst		r0, r1
+  beq		stacking_used_MSP
+  mrs 	r0, psp				// first parameter - stacking was using PSP
+  b		get_LR_and_branch
 stacking_used_MSP:
-	mrs 	r0, msp				// first parameter - stacking was using MSP
+  mrs 	r0, msp				// first parameter - stacking was using MSP
 get_LR_and_branch:
   movs  r1, #0x18
   ldr   r1, [r0,r1]   //get the stacked pc
-	bx		lr
+  b print_pc
+
+hard_fault_message:
+  .asciz "HardFault exception (#3)\n"
 
 .pool
 .size HardFault_Handler, .-HardFault_Handler
 
-/**
- * @brief  This is the code that gets called when the processor receives an
- *         unexpected interrupt.  This simply enters an infinite loop, preserving
- *         the system state for examination by a debugger.
- *
- * @param  None
- * @retval : None
-*/
-  .section .text.Default_Handler,"ax",%progbits
+
+.section .text.Default_Handler,"ax",%progbits
 Default_Handler:
+  ldr r0, =default_message
+  bl print_uart0
 Infinite_Loop:
   b Infinite_Loop
-  .size Default_Handler, .-Default_Handler
+
+default_message:
+  .asciz "Default exception (#4)\n"
+
+.size Default_Handler, .-Default_Handler
 
 /******************************************************************************
 *
@@ -281,5 +288,3 @@ g_pfnVectors:
 	.thumb_set USB_IRQHandler,Default_Handler
 
 //	.weak	SystemInit
-
-/************************ (C) COPYRIGHT STMicroelectonics *****END OF FILE****/
