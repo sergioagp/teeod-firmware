@@ -23,7 +23,7 @@ static const uint32_t k[64] = {
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-void sha256_init(SHA256_CTX *ctx) {
+void tee_sha256_init(SHA256_CTX *ctx) {
   ctx->datalen = 0;
   ctx->bitlen = 0;
   ctx->state[0] = 0x6a09e667;
@@ -76,7 +76,7 @@ void sha256_transform(SHA256_CTX *ctx, const uint8_t data[]) {
   ctx->state[7] += h;
 }
 
-void sha256_update(SHA256_CTX *ctx, const uint8_t *data, size_t len) {
+void tee_sha256_update(SHA256_CTX *ctx, const uint8_t *data, size_t len) {
   uint32_t i;
 
   for (i = 0; i < len; ++i) {
@@ -90,7 +90,7 @@ void sha256_update(SHA256_CTX *ctx, const uint8_t *data, size_t len) {
   }
 }
 
-void sha256_final(SHA256_CTX *ctx, uint8_t *hash) {
+void tee_sha256_final(SHA256_CTX *ctx, uint8_t *hash) {
   uint32_t i;
 
   i = ctx->datalen;
