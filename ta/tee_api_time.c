@@ -10,8 +10,6 @@
 extern uint32_t systick_counter_ms;
 // Get System Time Function
 void TEE_GetSystemTime(TEE_Time *time) {
-    printf("Atual value of systick_counter_ms: %d", systick_counter_ms);
-    printf("Atual value of SYSTICK_VAL: 0x%x", SYSTICK_VAL);
     // Get Milliseconds Counter
     uint32_t ms = systick_counter_ms;
 

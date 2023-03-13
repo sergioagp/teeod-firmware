@@ -101,5 +101,18 @@ int32_t TEE_MemCompare(const void *buffer1, const void *buffer2, uint32_t size);
 
 void *TEE_MemFill(void *buff, uint32_t x, uint32_t size);
 
+//TODO: Implement the following functions
+// void TEE_GenerateRandom(void *randomBuffer, uint32_t randomBufferLen);
+
+// void TEE_InitRefAttribute(TEE_Attribute *attr, uint32_t attributeID,
+//         void *buffer, uint32_t length);
+// TEE_InitValueAttribute
+// TEE_GetObjectBufferAttribute
+// TEE_BigIntInit
+// TEE_BigIntConvertFromOctetString
+// TEE_BigIntDiv
+// TEE_BigIntDiv
+// TEE_BigIntConvertToS32
+// TEE_BigIntCmpS32
 
 #endif /* TEE_API_H */
