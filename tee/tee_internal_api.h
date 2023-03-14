@@ -10,5 +10,5 @@
 #include <tee_api_defines.h>
 #include <tee_api_types.h>
 #include <tee_ta_api.h>
-
+#include <tee_api.h>
 #endif

@@ -64,7 +64,13 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
 
     *operation = (TEE_OperationHandle)op;
     return TEE_SUCCESS;
-    break;  
+    break;
+  case TEE_ALG_HMAC_SHA512:
+    if (mode != TEE_MODE_MAC) {
+      EMSG("TEE_AllocateOperation: bad parameters");
+      return TEE_ERROR_NOT_SUPPORTED;
+    }
+
   default:
     EMSG("TEE_AllocateOperation: bad parameters");
     return TEE_ERROR_NOT_SUPPORTED;
@@ -233,4 +239,37 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
   memcpy(destData, buf, srcLen);
   free(buf);
   return TEE_SUCCESS;
+}
+
+void TEE_MACInit(TEE_OperationHandle operation, const void *IV,
+		 uint32_t IVLen) {
+
+}
+
+void TEE_MACUpdate(TEE_OperationHandle operation, const void *chunk,
+		   uint32_t chunkSize) {
+
+}
+
+TEE_Result TEE_MACComputeFinal(TEE_OperationHandle operation,
+			       const void *message, uint32_t messageLen,
+			       void *mac, uint32_t *macLen) {
+  return TEE_SUCCESS;
+}
+
+TEE_Result TEE_AsymmetricSignDigest(TEE_ObjectHandle key,
+                                    const TEE_Attribute *params,
+                                    uint32_t paramCount,
+                                    const void *digest,
+                                    uint32_t digestLen,
+                                    void *signature,
+                                    uint32_t *signatureLen)
+{
+    // Check input arguments
+    if (key == TEE_HANDLE_NULL || digest == NULL ||
+        signature == NULL || signatureLen == NULL) {
+        return TEE_ERROR_BAD_PARAMETERS;
+    }
+
+    return TEE_SUCCESS;
 }
