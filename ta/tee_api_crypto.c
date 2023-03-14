@@ -81,7 +81,7 @@ void TEE_FreeOperation(TEE_OperationHandle operation) {
 
 TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, uint32_t chunkLen, void *hash, uint32_t *hashLen) {
   Crypto_Operation *op = (Crypto_Operation *)operation;
-
+  EVAL_INIT();
   if (!op || !hash || !hashLen) {
     EMSG("TEE_DigestDoFinal: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
@@ -95,8 +95,8 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA1");
-      tee_sha1_Update(&op->sha1_ctx, chunk, chunkLen);
-      tee_sha1_Final(&op->sha1_ctx, hash);
+       EVAL(tee_sha1_Update(&op->sha1_ctx, chunk, chunkLen);
+      tee_sha1_Final(&op->sha1_ctx, hash));
       *hashLen = SHA1_DIGEST_SIZE;
       break;
 
@@ -107,8 +107,8 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA256");
-      tee_sha256_update(&op->sha256_ctx, chunk, chunkLen);
-      tee_sha256_final(&op->sha256_ctx, hash);
+       EVAL(tee_sha256_update(&op->sha256_ctx, chunk, chunkLen);
+      tee_sha256_final(&op->sha256_ctx, hash));
       *hashLen = SHA256_BLOCK_SIZE;
       break;
 
@@ -122,7 +122,6 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
 
 TEE_Result TEE_SetOperationKey(TEE_OperationHandle operation,
 			       TEE_ObjectHandle key) {
-
   if (!operation || !key) {
     EMSG("TEE_SetOperationKey: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
@@ -203,7 +202,7 @@ void TEE_CipherInit(TEE_OperationHandle operation, const void *IV,
 TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
 			    uint32_t srcLen, void *destData, uint32_t *destLen) {
   (void) destLen;
-  
+  EVAL_INIT();
   if (!operation || !srcData || !destData) {
     EMSG("TEE_CipherUpdate: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
@@ -216,13 +215,13 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
   switch (op->algorithm)
   {
   case TEE_ALG_AES_ECB_NOPAD:
-    AES_ECB_encrypt(&op->aes_ctx, buf);
+    EVAL(AES_ECB_encrypt(&op->aes_ctx, buf));
     break;
   case TEE_ALG_AES_CBC_NOPAD:
-    AES_CBC_encrypt_buffer(&op->aes_ctx, buf, srcLen);
+     EVAL(AES_CBC_encrypt_buffer(&op->aes_ctx, buf, srcLen));
     break;
   case TEE_ALG_AES_CTR:
-    AES_CTR_xcrypt_buffer(&op->aes_ctx, buf, srcLen);
+     EVAL(AES_CTR_xcrypt_buffer(&op->aes_ctx, buf, srcLen));
   case TEE_ALG_AES_XTS:
     break;
   default:

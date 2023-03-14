@@ -491,6 +491,18 @@
 #include <stdio.h>
 #endif
 
+#ifdef EVAL_MODE
+typedef struct {
+	uint32_t seconds;
+	uint32_t millis;
+} eval_time;
+
+extern uint32_t systick_counter_ms;
+
+#define TIME_INTERVAL_MS(start, end) (((end)->seconds * 1000 + (end)->millis) - ((start)->seconds * 1000 + (start)->millis))
+
+#endif
+
 // Define the DMSG and IMSG macros
 #ifdef DEBUG_MODE
 #define DMSG(fmt, ...) printf("[DEBUG] " fmt "\r\n", ##__VA_ARGS__)
@@ -501,5 +513,17 @@
 #define IMSG(fmt, ...)
 #define EMSG(fmt, ...)
 #endif
+
+#ifdef EVAL_MODE
+#define EVAL_INIT() eval_time strt, end;
+#define EVAL(fc)  strt.seconds = systick_counter_ms/ 1000; strt.millis= systick_counter_ms % 1000; \
+                  fc; \
+                  end.seconds = systick_counter_ms/ 1000;end.millis= systick_counter_ms % 1000; \
+                  printf("Time taken for %s is %d ms\r\n", #fc, TIME_INTERVAL_MS(&strt, &end));
+#else
+#define EVAL(fc)  fc;
+#endif
+
+
 
 #endif /* TEE_API_DEFINES_H */
