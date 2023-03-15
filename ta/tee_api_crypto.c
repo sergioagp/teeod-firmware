@@ -4,9 +4,7 @@
 #include <tee_api_types.h>
 
 #include "aes.h"
-#include "sha1.h"
-#include "sha256.h"
-
+#include "sha.h"
 typedef struct {
   uint32_t algorithm;
   uint32_t mode;
@@ -57,9 +55,9 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
     op->maxKeySize = maxKeySize;
 
     if (algorithm == TEE_ALG_SHA1) {
-      tee_sha1_Init(&op->sha1_ctx);
+      sha1_Init(&op->sha1_ctx);
     } else if (algorithm == TEE_ALG_SHA256) {
-      tee_sha256_init(&op->sha256_ctx);
+      sha256_Init(&op->sha256_ctx);
     }
 
     *operation = (TEE_OperationHandle)op;
@@ -89,27 +87,25 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
 
   switch (op->algorithm) {
     case TEE_ALG_SHA1:
-      if (*hashLen < SHA1_DIGEST_SIZE) {
-        *hashLen = SHA1_DIGEST_SIZE;
+      if (*hashLen < SHA1_DIGEST_LENGTH) {
         EMSG("TEE_DigestDoFinal: short buffer");
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA1");
-       EVAL(tee_sha1_Update(&op->sha1_ctx, chunk, chunkLen);
-      tee_sha1_Final(&op->sha1_ctx, hash));
-      *hashLen = SHA1_DIGEST_SIZE;
+       EVAL(sha1_Update(&op->sha1_ctx, chunk, chunkLen);
+            sha1_Final(&op->sha1_ctx, hash));
+      *hashLen = SHA1_DIGEST_LENGTH;
       break;
 
     case TEE_ALG_SHA256:
-      if (*hashLen < SHA256_BLOCK_SIZE) {
-        *hashLen = SHA256_BLOCK_SIZE;
+      if (*hashLen < SHA256_DIGEST_LENGTH) {
         EMSG("TEE_DigestDoFinal: short buffer");
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA256");
-       EVAL(tee_sha256_update(&op->sha256_ctx, chunk, chunkLen);
-      tee_sha256_final(&op->sha256_ctx, hash));
-      *hashLen = SHA256_BLOCK_SIZE;
+       EVAL(sha256_Update(&op->sha256_ctx, chunk, chunkLen);
+            sha256_Final(&op->sha256_ctx, hash));
+      *hashLen = SHA256_DIGEST_LENGTH;
       break;
 
     default:

@@ -521,6 +521,7 @@ extern uint32_t systick_counter_ms;
                   end.seconds = systick_counter_ms/ 1000;end.millis= systick_counter_ms % 1000; \
                   printf("Time taken for %s is %d ms\r\n", #fc, TIME_INTERVAL_MS(&strt, &end));
 #else
+#define EVAL_INIT()
 #define EVAL(fc)  fc;
 #endif
 
