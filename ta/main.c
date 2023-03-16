@@ -11,7 +11,7 @@
 void tee_service_routine()
 {
   //TODO: change from pulling program to interrupt service
-  TEE_Operation *op = (TEE_Operation *)TEE_IPC_ADRR;
+  volatile TEE_Operation *op = (TEE_Operation *)TEE_IPC_ADRR;
   /* Loop forever */
 	for(;;) {
     while(op->type == 0);
