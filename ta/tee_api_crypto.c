@@ -118,7 +118,6 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
 
 TEE_Result TEE_SetOperationKey(TEE_OperationHandle operation,
 			       TEE_ObjectHandle key) {
-
   if (!operation || !key) {
     EMSG("TEE_SetOperationKey: bad parameters");
     return TEE_ERROR_BAD_PARAMETERS;
@@ -229,37 +228,4 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
   memcpy(destData, buf, srcLen);
   free(buf);
   return TEE_SUCCESS;
-}
-
-void TEE_MACInit(TEE_OperationHandle operation, const void *IV,
-		 uint32_t IVLen) {
-
-}
-
-void TEE_MACUpdate(TEE_OperationHandle operation, const void *chunk,
-		   uint32_t chunkSize) {
-
-}
-
-TEE_Result TEE_MACComputeFinal(TEE_OperationHandle operation,
-			       const void *message, uint32_t messageLen,
-			       void *mac, uint32_t *macLen) {
-  return TEE_SUCCESS;
-}
-
-TEE_Result TEE_AsymmetricSignDigest(TEE_ObjectHandle key,
-                                    const TEE_Attribute *params,
-                                    uint32_t paramCount,
-                                    const void *digest,
-                                    uint32_t digestLen,
-                                    void *signature,
-                                    uint32_t *signatureLen)
-{
-    // Check input arguments
-    if (key == TEE_HANDLE_NULL || digest == NULL ||
-        signature == NULL || signatureLen == NULL) {
-        return TEE_ERROR_BAD_PARAMETERS;
-    }
-
-    return TEE_SUCCESS;
 }
