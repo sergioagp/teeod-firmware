@@ -101,18 +101,53 @@ int32_t TEE_MemCompare(const void *buffer1, const void *buffer2, uint32_t size);
 
 void *TEE_MemFill(void *buff, uint32_t x, uint32_t size);
 
-//TODO: Implement the following functions
-// void TEE_GenerateRandom(void *randomBuffer, uint32_t randomBufferLen);
+/* Cryptographic Operations API - Random Number Generation Functions */
 
-// void TEE_InitRefAttribute(TEE_Attribute *attr, uint32_t attributeID,
-//         void *buffer, uint32_t length);
-// TEE_InitValueAttribute
-// TEE_GetObjectBufferAttribute
-// TEE_BigIntInit
-// TEE_BigIntConvertFromOctetString
-// TEE_BigIntDiv
-// TEE_BigIntDiv
-// TEE_BigIntConvertToS32
-// TEE_BigIntCmpS32
+void TEE_GenerateRandom(void *randomBuffer, uint32_t randomBufferLen);
+
+/* Data and Key Storage API  - Generic Object Functions */
+
+void TEE_InitRefAttribute(TEE_Attribute *attr, uint32_t attributeID,
+			  const void *buffer, uint32_t length);
+
+void TEE_InitValueAttribute(TEE_Attribute *attr, uint32_t attributeID,
+			    uint32_t a, uint32_t b);
+
+
+TEE_Result TEE_GetObjectBufferAttribute(TEE_ObjectHandle object,
+					uint32_t attributeID, void *buffer,
+					uint32_t *size);
+
+TEE_Result TEE_GetObjectValueAttribute(TEE_ObjectHandle object,
+				       uint32_t attributeID, uint32_t *a,
+				       uint32_t *b);
+
+/* TEE Arithmetical API - Initialization functions */
+
+void TEE_BigIntInit(TEE_BigInt *bigInt, uint32_t len);
+
+void TEE_BigIntDiv(TEE_BigInt *dest_q, TEE_BigInt *dest_r,
+		   const TEE_BigInt *op1, const TEE_BigInt *op2);
+
+TEE_Result TEE_BigIntConvertFromOctetString(TEE_BigInt *dest,
+					    const uint8_t *buffer,
+					    uint32_t bufferLen,
+					    int32_t sign);
+TEE_Result TEE_BigIntConvertToS32(int32_t *dest, const TEE_BigInt *src);
+
+int32_t TEE_BigIntCmpS32(const TEE_BigInt *op, int32_t shortVal);
+
+/* Cryptographic Operations API - MAC Functions */
+
+void TEE_MACInit(TEE_OperationHandle operation, const void *IV,
+		 uint32_t IVLen);
+
+void TEE_MACUpdate(TEE_OperationHandle operation, const void *chunk,
+		   uint32_t chunkSize);
+
+TEE_Result TEE_MACComputeFinal(TEE_OperationHandle operation,
+			       const void *message, uint32_t messageLen,
+			       void *mac, uint32_t *macLen);
+
 
 #endif /* TEE_API_H */
