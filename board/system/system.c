@@ -17,7 +17,7 @@
 
 
 volatile uint32_t systick_counter_ms = 0;
-
+#ifdef SYSTICK_ENABLE
 // Initialize the SysTick timer
 void SysTick_Init() {
     // Set the reload value to generate interrupts at the specified frequency
@@ -26,7 +26,7 @@ void SysTick_Init() {
     // Enable the SysTick timer with interrupts
     SYSTICK_CTRL = (1 << SBIT_ENABLE) | (1 << SBIT_TICKINT) | (1 << SBIT_CLKSOURCE);
 }
-
+#endif
 
 void SystemInit(void)
 {
@@ -34,7 +34,9 @@ void SystemInit(void)
                          User can setups the default system clock (System clock source, PLL Multiplier
                          and Divider factors, AHB/APBx prescalers and Flash settings).
    */
-  SysTick_Init();
+  #ifdef SYSTICK_ENABLE
+    SysTick_Init();
+  #endif
  //  setvbuf(stdout, NULL, _IONBF, 0); // disable buffering stdout, needed so that enters to _write
   setbuf(stdout, NULL);
 }

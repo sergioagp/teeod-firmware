@@ -30,8 +30,8 @@ INCLUDES +=  $(addprefix $(repo-dir-app)/,$(inc-app))
 CFLAGS += -Wall -Wextra -g -Wno-format -mthumb -march=armv6-m -mcpu=cortex-m1	-Wall -std=c11 -specs=nano.specs -O0 -fdebug-prefix-map=$(REPO_ROOT)= -g -ffreestanding -ffunction-sections -fdata-sections $(foreach i,$(INCLUDES),-I$(i)) $(foreach d,$(DEFINES),-D$(d))
 LDFLAGS = -mthumb -march=armv6-m -mcpu=cortex-m1 -Wl,--print-memory-usage -Wl,-Map=$(BUILD_DIR)/$(TARGET).map -T $(LD_FILE) -Wl,--gc-sections
 # QEMU_FLAGS = -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -gdb "tcp::50000" -S
-
-CFLAGS += -DDEBUG_MODE
+# CFLAGS += -DSYSTICK_ENABLE
+# CFLAGS += -DDEBUG_MODE -DEVAL_MODE
 
 # Object files
 OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
