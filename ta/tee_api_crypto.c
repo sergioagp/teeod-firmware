@@ -55,9 +55,9 @@ TEE_Result TEE_AllocateOperation(TEE_OperationHandle *operation, uint32_t algori
     op->maxKeySize = maxKeySize;
 
     if (algorithm == TEE_ALG_SHA1) {
-      sha1_Init(&op->sha1_ctx);
+      tee_sha1_Init(&op->sha1_ctx);
     } else if (algorithm == TEE_ALG_SHA256) {
-      sha256_Init(&op->sha256_ctx);
+      tee_sha256_Init(&op->sha256_ctx);
     }
 
     *operation = (TEE_OperationHandle)op;
@@ -92,8 +92,8 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA1");
-       EVAL(sha1_Update(&op->sha1_ctx, chunk, chunkLen);
-            sha1_Final(&op->sha1_ctx, hash));
+       EVAL(tee_sha1_Update(&op->sha1_ctx, chunk, chunkLen);
+            tee_sha1_Final(&op->sha1_ctx, hash));
       *hashLen = SHA1_DIGEST_LENGTH;
       break;
 
@@ -103,8 +103,8 @@ TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, u
         return TEE_ERROR_SHORT_BUFFER;
       }
       // IMSG("TEE_DigestDoFinal: SHA256");
-       EVAL(sha256_Update(&op->sha256_ctx, chunk, chunkLen);
-            sha256_Final(&op->sha256_ctx, hash));
+       EVAL(tee_sha256_Update(&op->sha256_ctx, chunk, chunkLen);
+            tee_sha256_Final(&op->sha256_ctx, hash));
       *hashLen = SHA256_DIGEST_LENGTH;
       break;
 
