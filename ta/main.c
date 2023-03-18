@@ -10,6 +10,7 @@
 
 int main(void)
 { 
+  //printf("\033[2J");  // sends the ASCII escape sequence to clear the console screen
   /* Loop forever */
   //TODO: change from pulling program to interrupt service
   volatile TEE_Operation *op = (TEE_Operation *)TEE_IPC_ADRR;
