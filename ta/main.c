@@ -8,8 +8,9 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
-void tee_service_routine()
-{
+int main(void)
+{ 
+  /* Loop forever */
   //TODO: change from pulling program to interrupt service
   volatile TEE_Operation *op = (TEE_Operation *)TEE_IPC_ADRR;
   /* Loop forever */
@@ -19,13 +20,5 @@ void tee_service_routine()
     op->type = 0;
     //fflush(stdout);
   }
-}
-
-int main(void)
-{
-  printf("\033[2J");  // sends the ASCII escape sequence to clear the console screen
-  
-  /* Loop forever */
-  tee_service_routine();
   return 0;
 }
