@@ -27,13 +27,13 @@ typedef struct {
 } TEE_Operation_params;
 
 typedef struct {
-  int type;
+  volatile int type;
   union {
-    uint32_t session_id;
-    TEE_UUID tee_uuid;
+    volatile uint32_t session_id;
+    volatile TEE_UUID tee_uuid;
   } ctx;
-  TEE_Operation_params par;
-  TEE_Result ret;
+  volatile TEE_Operation_params par;
+  volatile TEE_Result ret;
 } TEE_Operation;
 
 #endif /* TEE_CLIENT_IPC_H */
