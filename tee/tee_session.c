@@ -32,6 +32,7 @@ void delete_session(uint32_t session_id) {
     TEE_Session *session = get_session(session_id);
     // Free any allocated memory for the session
     free(session);
+    session = NULL;
     // Remove the session from the data structure
     uint32_t index = session_id % SESSION_HASH_SIZE;
     session_hash_table[index] = NULL;

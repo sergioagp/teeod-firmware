@@ -4,8 +4,7 @@
 #include <tee_api_defines.h>
 #include <tee_sharedmem.h>
 
-TEE_DataHandle data_obj;
-TEE_DataHandle *objdata = (TEE_DataHandle *)&data_obj;
+TEE_DataHandle *objdata = TEE_HANDLE_NULL;
 
 /* Data and Key Storage API  - Persistent Object Functions */
 TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
@@ -31,7 +30,8 @@ TEE_Result TEE_CreatePersistentObject(uint32_t storageID, const void *objectID,
   }
 
   // Allocate memory for the TEE_DataHandle object
-  //TEE_DataHandle *objdata = (TEE_DataHandle *)malloc(sizeof(TEE_DataHandle));
+  objdata = (TEE_DataHandle *)malloc(sizeof(TEE_DataHandle));
+
   if (!objdata) {
     EMSG("TEE_CreatePersistentObject: out of memory");
     return TEE_ERROR_OUT_OF_MEMORY;
@@ -65,6 +65,12 @@ TEE_Result TEE_OpenPersistentObject(uint32_t storageID, const void *objectID,
   (void) objectID;
   (void) objectIDLen;
   (void) flags;
+  // Check if the persistentObject was created
+
+  if(!objdata) {
+    EMSG("TEE_OpenPersistentObject: bad parameters");
+    return TEE_ERROR_ITEM_NOT_FOUND;
+  }
 
   objdata->currpos = 0;
   // Set the object handle to point to the TEE_DataHandle object
@@ -91,7 +97,9 @@ TEE_Result TEE_CloseAndDeletePersistentObject1(TEE_ObjectHandle object) {
   TEE_DataHandle *obj = (TEE_DataHandle*)object;
 
   free(obj->address);
+  obj->address = NULL;
   free(obj);
+  obj = NULL;
   return TEE_SUCCESS; 
 }
 
@@ -223,7 +231,9 @@ void TEE_FreeTransientObject(TEE_ObjectHandle object) {
   TEE_DataHandle *obj = (TEE_DataHandle*)object;
 
   free(obj->address);
+  obj->address = NULL;
   free(obj);
+  obj = NULL;
 }
 
 

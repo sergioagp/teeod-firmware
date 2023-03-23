@@ -51,6 +51,7 @@ void *TEE_Realloc(void *buffer, uint32_t newSize)
 void TEE_Free(void *buffer)
 {
 	free(buffer);
+  buffer = NULL;
 }
 
 void *TEE_MemMove(void *dest, const void *src, uint32_t size)

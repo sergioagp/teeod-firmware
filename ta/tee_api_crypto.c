@@ -75,6 +75,8 @@ void TEE_FreeOperation(TEE_OperationHandle operation) {
   }
 
   free(operation);
+  operation = NULL;
+
 }
 
 TEE_Result TEE_DigestDoFinal(TEE_OperationHandle operation, const void *chunk, uint32_t chunkLen, void *hash, uint32_t *hashLen) {
@@ -227,5 +229,6 @@ TEE_Result TEE_CipherUpdate(TEE_OperationHandle operation, const void *srcData,
 
   memcpy(destData, buf, srcLen);
   free(buf);
+  buf = NULL;
   return TEE_SUCCESS;
 }
