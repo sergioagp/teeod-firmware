@@ -31,7 +31,13 @@
 #include <string.h>
 #include <stdint.h>
 #include "sha.h"
-#include "memzero.h"
+
+
+void tee_memzero(void *s, size_t n)
+{
+	memset(s, 0, n);
+}
+
 
 /*
  * ASSERT NOTE:
@@ -93,9 +99,9 @@ typedef uint64_t sha2_word64;	/* Exactly 8 bytes */
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
-#define   SHA1_SHORT_BLOCK_LENGTH	(SHA1_BLOCK_LENGTH - 8)
-#define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
-#define SHA512_SHORT_BLOCK_LENGTH	(SHA512_BLOCK_LENGTH - 16)
+#define   tee_SHA1_SHORT_BLOCK_LENGTH	(tee_SHA1_BLOCK_LENGTH - 8)
+#define tee_SHA256_SHORT_BLOCK_LENGTH	(tee_SHA256_BLOCK_LENGTH - 8)
+#define tee_SHA512_SHORT_BLOCK_LENGTH	(tee_SHA512_BLOCK_LENGTH - 16)
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the
@@ -117,7 +123,7 @@ typedef uint64_t sha2_word64;	/* Exactly 8 bytes */
  *
  *   NOTE:  In the original SHA-256/384/512 document, the shift-right
  *   function was named R and the rotate-right function was called S.
- *   (See: http://csrc.nist.gov/cryptval/shs/sha256-384-512.pdf on the
+ *   (See: http://csrc.nist.gov/cryptval/shs/tee_sha256-384-512.pdf on the
  *   web.)
  *
  *   The newer NIST FIPS 180-2 document uses a much clearer naming
@@ -164,7 +170,7 @@ typedef uint64_t sha2_word64;	/* Exactly 8 bytes */
  * library -- they are intended for private internal visibility/use
  * only.
  */
-static void sha512_Last(SHA512_CTX*);
+static void tee_sha512_Last(tee_SHA512_CTX*);
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
@@ -176,7 +182,7 @@ static void sha512_Last(SHA512_CTX*);
 #define K1_60_TO_79	0xca62c1d6UL
 
 /* Initial hash value H for SHA-1: */
-const sha2_word32 sha1_initial_hash_value[SHA1_DIGEST_LENGTH / sizeof(sha2_word32)] = {
+const sha2_word32 tee_sha1_initial_hash_value[tee_SHA1_DIGEST_LENGTH / sizeof(sha2_word32)] = {
 	0x67452301UL,
 	0xefcdab89UL,
 	0x98badcfeUL,
@@ -205,7 +211,7 @@ static const sha2_word32 K256[64] = {
 };
 
 /* Initial hash value H for SHA-256: */
-const sha2_word32 sha256_initial_hash_value[8] = {
+const sha2_word32 tee_sha256_initial_hash_value[8] = {
 	0x6a09e667UL,
 	0xbb67ae85UL,
 	0x3c6ef372UL,
@@ -261,7 +267,7 @@ static const sha2_word64 K512[80] = {
 };
 
 /* Initial hash value H for SHA-512 */
-const sha2_word64 sha512_initial_hash_value[8] = {
+const sha2_word64 tee_sha512_initial_hash_value[8] = {
 	0x6a09e667f3bcc908ULL,
 	0xbb67ae8584caa73bULL,
 	0x3c6ef372fe94f82bULL,
@@ -273,16 +279,16 @@ const sha2_word64 sha512_initial_hash_value[8] = {
 };
 
 /*
- * Constant used by SHA256/384/512_End() functions for converting the
+ * Constant used by tee_SHA256/384/512_End() functions for converting the
  * digest to a readable hexadecimal character string:
  */
 static const char *sha2_hex_digits = "0123456789abcdef";
 
 
 /*** SHA-1: ***********************************************************/
-void sha1_Init(SHA1_CTX* context) {
-	MEMCPY_BCOPY(context->state, sha1_initial_hash_value, SHA1_DIGEST_LENGTH);
-	memzero(context->buffer, SHA1_BLOCK_LENGTH);
+void tee_sha1_Init(tee_SHA1_CTX* context) {
+	MEMCPY_BCOPY(context->state, tee_sha1_initial_hash_value, tee_SHA1_DIGEST_LENGTH);
+	tee_memzero(context->buffer, tee_SHA1_BLOCK_LENGTH);
 	context->bitcount = 0;
 }
 
@@ -320,7 +326,7 @@ void sha1_Init(SHA1_CTX* context) {
 	(b) = ROTL32(30, b);	\
 	j++;
 
-void sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
+void tee_sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
 	sha2_word32	a, b, c, d, e;
 	sha2_word32	T1;
 	sha2_word32	W1[16];
@@ -438,7 +444,7 @@ void sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_w
 
 #else  /* SHA2_UNROLL_TRANSFORM */
 
-void sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
+void tee_sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
 	sha2_word32	a, b, c, d, e;
 	sha2_word32	T1;
 	sha2_word32	W1[16];
@@ -519,7 +525,7 @@ void sha1_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_w
 
 #endif /* SHA2_UNROLL_TRANSFORM */
 
-void sha1_Update(SHA1_CTX* context, const sha2_byte *data, size_t len) {
+void tee_sha1_Update(tee_SHA1_CTX* context, const sha2_byte *data, size_t len) {
 	unsigned int	freespace, usedspace;
 
 	if (len == 0) {
@@ -527,10 +533,10 @@ void sha1_Update(SHA1_CTX* context, const sha2_byte *data, size_t len) {
 		return;
 	}
 
-	usedspace = (context->bitcount >> 3) % SHA1_BLOCK_LENGTH;
+	usedspace = (context->bitcount >> 3) % tee_SHA1_BLOCK_LENGTH;
 	if (usedspace > 0) {
 		/* Calculate how much free space is available in the buffer */
-		freespace = SHA1_BLOCK_LENGTH - usedspace;
+		freespace = tee_SHA1_BLOCK_LENGTH - usedspace;
 
 		if (len >= freespace) {
 			/* Fill the buffer completely and process it */
@@ -544,7 +550,7 @@ void sha1_Update(SHA1_CTX* context, const sha2_byte *data, size_t len) {
 				REVERSE32(context->buffer[j],context->buffer[j]);
 			}
 #endif
-			sha1_Transform(context->state, context->buffer, context->state);
+			tee_sha1_Transform(context->state, context->buffer, context->state);
 		} else {
 			/* The buffer is not yet full */
 			MEMCPY_BCOPY(((uint8_t*)context->buffer) + usedspace, data, len);
@@ -554,19 +560,19 @@ void sha1_Update(SHA1_CTX* context, const sha2_byte *data, size_t len) {
 			return;
 		}
 	}
-	while (len >= SHA1_BLOCK_LENGTH) {
+	while (len >= tee_SHA1_BLOCK_LENGTH) {
 		/* Process as many complete blocks as we can */
-		MEMCPY_BCOPY(context->buffer, data, SHA1_BLOCK_LENGTH);
+		MEMCPY_BCOPY(context->buffer, data, tee_SHA1_BLOCK_LENGTH);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
 		for (int j = 0; j < 16; j++) {
 			REVERSE32(context->buffer[j],context->buffer[j]);
 		}
 #endif
-		sha1_Transform(context->state, context->buffer, context->state);
-		context->bitcount += SHA1_BLOCK_LENGTH << 3;
-		len -= SHA1_BLOCK_LENGTH;
-		data += SHA1_BLOCK_LENGTH;
+		tee_sha1_Transform(context->state, context->buffer, context->state);
+		context->bitcount += tee_SHA1_BLOCK_LENGTH << 3;
+		len -= tee_SHA1_BLOCK_LENGTH;
+		data += tee_SHA1_BLOCK_LENGTH;
 	}
 	if (len > 0) {
 		/* There's left-overs, so save 'em */
@@ -577,17 +583,17 @@ void sha1_Update(SHA1_CTX* context, const sha2_byte *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void sha1_Final(SHA1_CTX* context, sha2_byte digest[]) {
+void tee_sha1_Final(tee_SHA1_CTX* context, sha2_byte digest[]) {
 	unsigned int	usedspace;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != (sha2_byte*)0) {
-		usedspace = (context->bitcount >> 3) % SHA1_BLOCK_LENGTH;
+		usedspace = (context->bitcount >> 3) % tee_SHA1_BLOCK_LENGTH;
 		/* Begin padding with a 1 bit: */
 		((uint8_t*)context->buffer)[usedspace++] = 0x80;
 
-		if (usedspace > SHA1_SHORT_BLOCK_LENGTH) {
-			memzero(((uint8_t*)context->buffer) + usedspace, SHA1_BLOCK_LENGTH - usedspace);
+		if (usedspace > tee_SHA1_SHORT_BLOCK_LENGTH) {
+			tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA1_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 			/* Convert TO host byte order */
@@ -596,13 +602,13 @@ void sha1_Final(SHA1_CTX* context, sha2_byte digest[]) {
 			}
 #endif
 			/* Do second-to-last transform: */
-			sha1_Transform(context->state, context->buffer, context->state);
+			tee_sha1_Transform(context->state, context->buffer, context->state);
 
 			/* And prepare the last transform: */
 			usedspace = 0;
 		}
 		/* Set-up for the last transform: */
-		memzero(((uint8_t*)context->buffer) + usedspace, SHA1_SHORT_BLOCK_LENGTH - usedspace);
+		tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA1_SHORT_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
@@ -615,7 +621,7 @@ void sha1_Final(SHA1_CTX* context, sha2_byte digest[]) {
 		context->buffer[15] = context->bitcount & 0xffffffff;
 
 		/* Final transform: */
-		sha1_Transform(context->state, context->buffer, context->state);
+		tee_sha1_Transform(context->state, context->buffer, context->state);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert FROM host byte order */
@@ -623,56 +629,56 @@ void sha1_Final(SHA1_CTX* context, sha2_byte digest[]) {
 			REVERSE32(context->state[j],context->state[j]);
 		}
 #endif
-		MEMCPY_BCOPY(digest, context->state, SHA1_DIGEST_LENGTH);
+		MEMCPY_BCOPY(digest, context->state, tee_SHA1_DIGEST_LENGTH);
 	}
 
 	/* Clean up state data: */
-	memzero(context, sizeof(SHA1_CTX));
+	tee_memzero(context, sizeof(tee_SHA1_CTX));
 	usedspace = 0;
 }
 
-char *sha1_End(SHA1_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA1_DIGEST_LENGTH], *d = digest;
+char *tee_sha1_End(tee_SHA1_CTX* context, char buffer[]) {
+	sha2_byte	digest[tee_SHA1_DIGEST_LENGTH], *d = digest;
 	int		i;
 
 	if (buffer != (char*)0) {
-		sha1_Final(context, digest);
+		tee_sha1_Final(context, digest);
 
-		for (i = 0; i < SHA1_DIGEST_LENGTH; i++) {
+		for (i = 0; i < tee_SHA1_DIGEST_LENGTH; i++) {
 			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;
 	} else {
-		memzero(context, sizeof(SHA1_CTX));
+		tee_memzero(context, sizeof(tee_SHA1_CTX));
 	}
-	memzero(digest, SHA1_DIGEST_LENGTH);
+	tee_memzero(digest, tee_SHA1_DIGEST_LENGTH);
 	return buffer;
 }
 
-void sha1_Raw(const sha2_byte* data, size_t len, uint8_t digest[SHA1_DIGEST_LENGTH]) {
-	SHA1_CTX	context;
-	sha1_Init(&context);
-	sha1_Update(&context, data, len);
-	sha1_Final(&context, digest);
+void tee_sha1_Raw(const sha2_byte* data, size_t len, uint8_t digest[tee_SHA1_DIGEST_LENGTH]) {
+	tee_SHA1_CTX	context;
+	tee_sha1_Init(&context);
+	tee_sha1_Update(&context, data, len);
+	tee_sha1_Final(&context, digest);
 }
 
-char* sha1_Data(const sha2_byte* data, size_t len, char digest[SHA1_DIGEST_STRING_LENGTH]) {
-	SHA1_CTX	context;
+char* tee_sha1_Data(const sha2_byte* data, size_t len, char digest[tee_SHA1_DIGEST_STRING_LENGTH]) {
+	tee_SHA1_CTX	context;
 
-	sha1_Init(&context);
-	sha1_Update(&context, data, len);
-	return sha1_End(&context, digest);
+	tee_sha1_Init(&context);
+	tee_sha1_Update(&context, data, len);
+	return tee_sha1_End(&context, digest);
 }
 
 /*** SHA-256: *********************************************************/
-void sha256_Init(SHA256_CTX* context) {
-	if (context == (SHA256_CTX*)0) {
+void tee_sha256_Init(tee_SHA256_CTX* context) {
+	if (context == (tee_SHA256_CTX*)0) {
 		return;
 	}
-	MEMCPY_BCOPY(context->state, sha256_initial_hash_value, SHA256_DIGEST_LENGTH);
-	memzero(context->buffer, SHA256_BLOCK_LENGTH);
+	MEMCPY_BCOPY(context->state, tee_sha256_initial_hash_value, tee_SHA256_DIGEST_LENGTH);
+	tee_memzero(context->buffer, tee_SHA256_BLOCK_LENGTH);
 	context->bitcount = 0;
 }
 
@@ -698,7 +704,7 @@ void sha256_Init(SHA256_CTX* context) {
 	(h) = T1 + Sigma0_256(a) + Maj((a), (b), (c)); \
 	j++
 
-void sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
+void tee_sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
 	sha2_word32	a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word32	T1;
 	sha2_word32 W256[16];
@@ -755,7 +761,7 @@ void sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
+void tee_sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2_word32* state_out) {
 	sha2_word32	a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word32	T1, T2, W256[16];
 	int		j;
@@ -826,7 +832,7 @@ void sha256_Transform(const sha2_word32* state_in, const sha2_word32* data, sha2
 
 #endif /* SHA2_UNROLL_TRANSFORM */
 
-void sha256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
+void tee_sha256_Update(tee_SHA256_CTX* context, const sha2_byte *data, size_t len) {
 	unsigned int	freespace, usedspace;
 
 	if (len == 0) {
@@ -834,10 +840,10 @@ void sha256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 		return;
 	}
 
-	usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
+	usedspace = (context->bitcount >> 3) % tee_SHA256_BLOCK_LENGTH;
 	if (usedspace > 0) {
 		/* Calculate how much free space is available in the buffer */
-		freespace = SHA256_BLOCK_LENGTH - usedspace;
+		freespace = tee_SHA256_BLOCK_LENGTH - usedspace;
 
 		if (len >= freespace) {
 			/* Fill the buffer completely and process it */
@@ -851,7 +857,7 @@ void sha256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 				REVERSE32(context->buffer[j],context->buffer[j]);
 			}
 #endif
-			sha256_Transform(context->state, context->buffer, context->state);
+			tee_sha256_Transform(context->state, context->buffer, context->state);
 		} else {
 			/* The buffer is not yet full */
 			MEMCPY_BCOPY(((uint8_t*)context->buffer) + usedspace, data, len);
@@ -861,19 +867,19 @@ void sha256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 			return;
 		}
 	}
-	while (len >= SHA256_BLOCK_LENGTH) {
+	while (len >= tee_SHA256_BLOCK_LENGTH) {
 		/* Process as many complete blocks as we can */
-		MEMCPY_BCOPY(context->buffer, data, SHA256_BLOCK_LENGTH);
+		MEMCPY_BCOPY(context->buffer, data, tee_SHA256_BLOCK_LENGTH);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
 		for (int j = 0; j < 16; j++) {
 			REVERSE32(context->buffer[j],context->buffer[j]);
 		}
 #endif
-		sha256_Transform(context->state, context->buffer, context->state);
-		context->bitcount += SHA256_BLOCK_LENGTH << 3;
-		len -= SHA256_BLOCK_LENGTH;
-		data += SHA256_BLOCK_LENGTH;
+		tee_sha256_Transform(context->state, context->buffer, context->state);
+		context->bitcount += tee_SHA256_BLOCK_LENGTH << 3;
+		len -= tee_SHA256_BLOCK_LENGTH;
+		data += tee_SHA256_BLOCK_LENGTH;
 	}
 	if (len > 0) {
 		/* There's left-overs, so save 'em */
@@ -884,17 +890,17 @@ void sha256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void sha256_Final(SHA256_CTX* context, sha2_byte digest[]) {
+void tee_sha256_Final(tee_SHA256_CTX* context, sha2_byte digest[]) {
 	unsigned int	usedspace;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != (sha2_byte*)0) {
-		usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
+		usedspace = (context->bitcount >> 3) % tee_SHA256_BLOCK_LENGTH;
 		/* Begin padding with a 1 bit: */
 		((uint8_t*)context->buffer)[usedspace++] = 0x80;
 		
-		if (usedspace > SHA256_SHORT_BLOCK_LENGTH) {
-			memzero(((uint8_t*)context->buffer) + usedspace, SHA256_BLOCK_LENGTH - usedspace);
+		if (usedspace > tee_SHA256_SHORT_BLOCK_LENGTH) {
+			tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA256_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 			/* Convert TO host byte order */
@@ -903,13 +909,13 @@ void sha256_Final(SHA256_CTX* context, sha2_byte digest[]) {
 			}
 #endif
 			/* Do second-to-last transform: */
-			sha256_Transform(context->state, context->buffer, context->state);
+			tee_sha256_Transform(context->state, context->buffer, context->state);
 			
 			/* And prepare the last transform: */
 			usedspace = 0;
 		}
 		/* Set-up for the last transform: */
-		memzero(((uint8_t*)context->buffer) + usedspace, SHA256_SHORT_BLOCK_LENGTH - usedspace);
+		tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA256_SHORT_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
@@ -922,7 +928,7 @@ void sha256_Final(SHA256_CTX* context, sha2_byte digest[]) {
 		context->buffer[15] = context->bitcount & 0xffffffff;
 
 		/* Final transform: */
-		sha256_Transform(context->state, context->buffer, context->state);
+		tee_sha256_Transform(context->state, context->buffer, context->state);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert FROM host byte order */
@@ -930,57 +936,57 @@ void sha256_Final(SHA256_CTX* context, sha2_byte digest[]) {
 			REVERSE32(context->state[j],context->state[j]);
 		}
 #endif
-		MEMCPY_BCOPY(digest, context->state, SHA256_DIGEST_LENGTH);
+		MEMCPY_BCOPY(digest, context->state, tee_SHA256_DIGEST_LENGTH);
 	}
 
 	/* Clean up state data: */
-	memzero(context, sizeof(SHA256_CTX));
+	tee_memzero(context, sizeof(tee_SHA256_CTX));
 	usedspace = 0;
 }
 
-char *sha256_End(SHA256_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA256_DIGEST_LENGTH], *d = digest;
+char *tee_sha256_End(tee_SHA256_CTX* context, char buffer[]) {
+	sha2_byte	digest[tee_SHA256_DIGEST_LENGTH], *d = digest;
 	int		i;
 
 	if (buffer != (char*)0) {
-		sha256_Final(context, digest);
+		tee_sha256_Final(context, digest);
 
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+		for (i = 0; i < tee_SHA256_DIGEST_LENGTH; i++) {
 			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;
 	} else {
-		memzero(context, sizeof(SHA256_CTX));
+		tee_memzero(context, sizeof(tee_SHA256_CTX));
 	}
-	memzero(digest, SHA256_DIGEST_LENGTH);
+	tee_memzero(digest, tee_SHA256_DIGEST_LENGTH);
 	return buffer;
 }
 
-void sha256_Raw(const sha2_byte* data, size_t len, uint8_t digest[SHA256_DIGEST_LENGTH]) {
-	SHA256_CTX	context;
-	sha256_Init(&context);
-	sha256_Update(&context, data, len);
-	sha256_Final(&context, digest);
+void tee_sha256_Raw(const sha2_byte* data, size_t len, uint8_t digest[tee_SHA256_DIGEST_LENGTH]) {
+	tee_SHA256_CTX	context;
+	tee_sha256_Init(&context);
+	tee_sha256_Update(&context, data, len);
+	tee_sha256_Final(&context, digest);
 }
 
-char* sha256_Data(const sha2_byte* data, size_t len, char digest[SHA256_DIGEST_STRING_LENGTH]) {
-	SHA256_CTX	context;
+char* tee_sha256_Data(const sha2_byte* data, size_t len, char digest[tee_SHA256_DIGEST_STRING_LENGTH]) {
+	tee_SHA256_CTX	context;
 
-	sha256_Init(&context);
-	sha256_Update(&context, data, len);
-	return sha256_End(&context, digest);
+	tee_sha256_Init(&context);
+	tee_sha256_Update(&context, data, len);
+	return tee_sha256_End(&context, digest);
 }
 
 
 /*** SHA-512: *********************************************************/
-void sha512_Init(SHA512_CTX* context) {
-	if (context == (SHA512_CTX*)0) {
+void tee_sha512_Init(tee_SHA512_CTX* context) {
+	if (context == (tee_SHA512_CTX*)0) {
 		return;
 	}
-	MEMCPY_BCOPY(context->state, sha512_initial_hash_value, SHA512_DIGEST_LENGTH);
-	memzero(context->buffer, SHA512_BLOCK_LENGTH);
+	MEMCPY_BCOPY(context->state, tee_sha512_initial_hash_value, tee_SHA512_DIGEST_LENGTH);
+	tee_memzero(context->buffer, tee_SHA512_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] =  0;
 }
 
@@ -1005,7 +1011,7 @@ void sha512_Init(SHA512_CTX* context) {
 	(h) = T1 + Sigma0_512(a) + Maj((a), (b), (c)); \
 	j++
 
-void sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2_word64* state_out) {
+void tee_sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2_word64* state_out) {
 	sha2_word64	a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word64	T1, W512[16];
 	int		j;
@@ -1060,7 +1066,7 @@ void sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2
 
 #else /* SHA2_UNROLL_TRANSFORM */
 
-void sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2_word64* state_out) {
+void tee_sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2_word64* state_out) {
 	sha2_word64	a, b, c, d, e, f, g, h, s0, s1;
 	sha2_word64	T1, T2, W512[16];
 	int		j;
@@ -1131,7 +1137,7 @@ void sha512_Transform(const sha2_word64* state_in, const sha2_word64* data, sha2
 
 #endif /* SHA2_UNROLL_TRANSFORM */
 
-void sha512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
+void tee_sha512_Update(tee_SHA512_CTX* context, const sha2_byte *data, size_t len) {
 	unsigned int	freespace, usedspace;
 
 	if (len == 0) {
@@ -1139,10 +1145,10 @@ void sha512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 		return;
 	}
 
-	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
+	usedspace = (context->bitcount[0] >> 3) % tee_SHA512_BLOCK_LENGTH;
 	if (usedspace > 0) {
 		/* Calculate how much free space is available in the buffer */
-		freespace = SHA512_BLOCK_LENGTH - usedspace;
+		freespace = tee_SHA512_BLOCK_LENGTH - usedspace;
 
 		if (len >= freespace) {
 			/* Fill the buffer completely and process it */
@@ -1156,7 +1162,7 @@ void sha512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 				REVERSE64(context->buffer[j],context->buffer[j]);
 			}
 #endif
-			sha512_Transform(context->state, context->buffer, context->state);
+			tee_sha512_Transform(context->state, context->buffer, context->state);
 		} else {
 			/* The buffer is not yet full */
 			MEMCPY_BCOPY(((uint8_t*)context->buffer) + usedspace, data, len);
@@ -1166,19 +1172,19 @@ void sha512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 			return;
 		}
 	}
-	while (len >= SHA512_BLOCK_LENGTH) {
+	while (len >= tee_SHA512_BLOCK_LENGTH) {
 		/* Process as many complete blocks as we can */
-		MEMCPY_BCOPY(context->buffer, data, SHA512_BLOCK_LENGTH);
+		MEMCPY_BCOPY(context->buffer, data, tee_SHA512_BLOCK_LENGTH);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
 		for (int j = 0; j < 16; j++) {
 			REVERSE64(context->buffer[j],context->buffer[j]);
 		}
 #endif
-		sha512_Transform(context->state, context->buffer, context->state);
-		ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
-		len -= SHA512_BLOCK_LENGTH;
-		data += SHA512_BLOCK_LENGTH;
+		tee_sha512_Transform(context->state, context->buffer, context->state);
+		ADDINC128(context->bitcount, tee_SHA512_BLOCK_LENGTH << 3);
+		len -= tee_SHA512_BLOCK_LENGTH;
+		data += tee_SHA512_BLOCK_LENGTH;
 	}
 	if (len > 0) {
 		/* There's left-overs, so save 'em */
@@ -1189,15 +1195,15 @@ void sha512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-static void sha512_Last(SHA512_CTX* context) {
+static void tee_sha512_Last(tee_SHA512_CTX* context) {
 	unsigned int	usedspace;
 
-	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
+	usedspace = (context->bitcount[0] >> 3) % tee_SHA512_BLOCK_LENGTH;
 	/* Begin padding with a 1 bit: */
 	((uint8_t*)context->buffer)[usedspace++] = 0x80;
 	
-	if (usedspace > SHA512_SHORT_BLOCK_LENGTH) {
-		memzero(((uint8_t*)context->buffer) + usedspace, SHA512_BLOCK_LENGTH - usedspace);
+	if (usedspace > tee_SHA512_SHORT_BLOCK_LENGTH) {
+		tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA512_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert TO host byte order */
@@ -1206,13 +1212,13 @@ static void sha512_Last(SHA512_CTX* context) {
 		}
 #endif
 		/* Do second-to-last transform: */
-		sha512_Transform(context->state, context->buffer, context->state);
+		tee_sha512_Transform(context->state, context->buffer, context->state);
 
 		/* And prepare the last transform: */
 		usedspace = 0;
 	}
 	/* Set-up for the last transform: */
-	memzero(((uint8_t*)context->buffer) + usedspace, SHA512_SHORT_BLOCK_LENGTH - usedspace);
+	tee_memzero(((uint8_t*)context->buffer) + usedspace, tee_SHA512_SHORT_BLOCK_LENGTH - usedspace);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/* Convert TO host byte order */
@@ -1225,13 +1231,13 @@ static void sha512_Last(SHA512_CTX* context) {
 	context->buffer[15] = context->bitcount[0];
 
 	/* Final transform: */
-	sha512_Transform(context->state, context->buffer, context->state);
+	tee_sha512_Transform(context->state, context->buffer, context->state);
 }
 
-void sha512_Final(SHA512_CTX* context, sha2_byte digest[]) {
+void tee_sha512_Final(tee_SHA512_CTX* context, sha2_byte digest[]) {
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != (sha2_byte*)0) {
-		sha512_Last(context);
+		tee_sha512_Last(context);
 
 		/* Save the hash data for output: */
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1240,44 +1246,44 @@ void sha512_Final(SHA512_CTX* context, sha2_byte digest[]) {
 			REVERSE64(context->state[j],context->state[j]);
 		}
 #endif
-		MEMCPY_BCOPY(digest, context->state, SHA512_DIGEST_LENGTH);
+		MEMCPY_BCOPY(digest, context->state, tee_SHA512_DIGEST_LENGTH);
 	}
 
 	/* Zero out state data */
-	memzero(context, sizeof(SHA512_CTX));
+	tee_memzero(context, sizeof(tee_SHA512_CTX));
 }
 
-char *sha512_End(SHA512_CTX* context, char buffer[]) {
-	sha2_byte	digest[SHA512_DIGEST_LENGTH], *d = digest;
+char *tee_sha512_End(tee_SHA512_CTX* context, char buffer[]) {
+	sha2_byte	digest[tee_SHA512_DIGEST_LENGTH], *d = digest;
 	int		i;
 
 	if (buffer != (char*)0) {
-		sha512_Final(context, digest);
+		tee_sha512_Final(context, digest);
 
-		for (i = 0; i < SHA512_DIGEST_LENGTH; i++) {
+		for (i = 0; i < tee_SHA512_DIGEST_LENGTH; i++) {
 			*buffer++ = sha2_hex_digits[(*d & 0xf0) >> 4];
 			*buffer++ = sha2_hex_digits[*d & 0x0f];
 			d++;
 		}
 		*buffer = (char)0;
 	} else {
-		memzero(context, sizeof(SHA512_CTX));
+		tee_memzero(context, sizeof(tee_SHA512_CTX));
 	}
-	memzero(digest, SHA512_DIGEST_LENGTH);
+	tee_memzero(digest, tee_SHA512_DIGEST_LENGTH);
 	return buffer;
 }
 
-void sha512_Raw(const sha2_byte* data, size_t len, uint8_t digest[SHA512_DIGEST_LENGTH]) {
-	SHA512_CTX	context;
-	sha512_Init(&context);
-	sha512_Update(&context, data, len);
-	sha512_Final(&context, digest);
+void tee_sha512_Raw(const sha2_byte* data, size_t len, uint8_t digest[tee_SHA512_DIGEST_LENGTH]) {
+	tee_SHA512_CTX	context;
+	tee_sha512_Init(&context);
+	tee_sha512_Update(&context, data, len);
+	tee_sha512_Final(&context, digest);
 }
 
-char* sha512_Data(const sha2_byte* data, size_t len, char digest[SHA512_DIGEST_STRING_LENGTH]) {
-	SHA512_CTX	context;
+char* tee_sha512_Data(const sha2_byte* data, size_t len, char digest[tee_SHA512_DIGEST_STRING_LENGTH]) {
+	tee_SHA512_CTX	context;
 
-	sha512_Init(&context);
-	sha512_Update(&context, data, len);
-	return sha512_End(&context, digest);
+	tee_sha512_Init(&context);
+	tee_sha512_Update(&context, data, len);
+	return tee_sha512_End(&context, digest);
 }

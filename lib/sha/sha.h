@@ -34,31 +34,31 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define   SHA1_BLOCK_LENGTH		64
-#define   SHA1_DIGEST_LENGTH		20
-#define   SHA1_DIGEST_STRING_LENGTH	(SHA1_DIGEST_LENGTH   * 2 + 1)
-#define SHA256_BLOCK_LENGTH		64
-#define SHA256_DIGEST_LENGTH		32
-#define SHA256_DIGEST_STRING_LENGTH	(SHA256_DIGEST_LENGTH * 2 + 1)
-#define SHA512_BLOCK_LENGTH		128
-#define SHA512_DIGEST_LENGTH		64
-#define SHA512_DIGEST_STRING_LENGTH	(SHA512_DIGEST_LENGTH * 2 + 1)
+#define   tee_SHA1_BLOCK_LENGTH		64
+#define   tee_SHA1_DIGEST_LENGTH		20
+#define   tee_SHA1_DIGEST_STRING_LENGTH	(tee_SHA1_DIGEST_LENGTH   * 2 + 1)
+#define tee_SHA256_BLOCK_LENGTH		64
+#define tee_SHA256_DIGEST_LENGTH		32
+#define tee_SHA256_DIGEST_STRING_LENGTH	(tee_SHA256_DIGEST_LENGTH * 2 + 1)
+#define tee_SHA512_BLOCK_LENGTH		128
+#define tee_SHA512_DIGEST_LENGTH		64
+#define tee_SHA512_DIGEST_STRING_LENGTH	(tee_SHA512_DIGEST_LENGTH * 2 + 1)
 
-typedef struct _SHA1_CTX {
+typedef struct _tee_SHA1_CTX {
 	uint32_t	state[5];
 	uint64_t	bitcount;
-	uint32_t	buffer[SHA1_BLOCK_LENGTH/sizeof(uint32_t)];
-} SHA1_CTX;
-typedef struct _SHA256_CTX {
+	uint32_t	buffer[tee_SHA1_BLOCK_LENGTH/sizeof(uint32_t)];
+} tee_SHA1_CTX;
+typedef struct _tee_SHA256_CTX {
 	uint32_t	state[8];
 	uint64_t	bitcount;
-	uint32_t	buffer[SHA256_BLOCK_LENGTH/sizeof(uint32_t)];
-} SHA256_CTX;
-typedef struct _SHA512_CTX {
+	uint32_t	buffer[tee_SHA256_BLOCK_LENGTH/sizeof(uint32_t)];
+} tee_SHA256_CTX;
+typedef struct _tee_SHA512_CTX {
 	uint64_t	state[8];
 	uint64_t	bitcount[2];
-	uint64_t	buffer[SHA512_BLOCK_LENGTH/sizeof(uint64_t)];
-} SHA512_CTX;
+	uint64_t	buffer[tee_SHA512_BLOCK_LENGTH/sizeof(uint64_t)];
+} tee_SHA512_CTX;
 
 /*** ENDIAN REVERSAL MACROS *******************************************/
 #ifndef LITTLE_ENDIAN
@@ -86,31 +86,31 @@ typedef struct _SHA512_CTX {
 }
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
 
-extern const uint32_t sha256_initial_hash_value[8];
-extern const uint64_t sha512_initial_hash_value[8];
+extern const uint32_t tee_sha256_initial_hash_value[8];
+extern const uint64_t tee_sha512_initial_hash_value[8];
 
-void sha1_Transform(const uint32_t* state_in, const uint32_t* data, uint32_t* state_out);
-void sha1_Init(SHA1_CTX *);
-void sha1_Update(SHA1_CTX*, const uint8_t*, size_t);
-void sha1_Final(SHA1_CTX*, uint8_t[SHA1_DIGEST_LENGTH]);
-char* sha1_End(SHA1_CTX*, char[SHA1_DIGEST_STRING_LENGTH]);
-void sha1_Raw(const uint8_t*, size_t, uint8_t[SHA1_DIGEST_LENGTH]);
-char* sha1_Data(const uint8_t*, size_t, char[SHA1_DIGEST_STRING_LENGTH]);
+void tee_sha1_Transform(const uint32_t* state_in, const uint32_t* data, uint32_t* state_out);
+void tee_sha1_Init(tee_SHA1_CTX *);
+void tee_sha1_Update(tee_SHA1_CTX*, const uint8_t*, size_t);
+void tee_sha1_Final(tee_SHA1_CTX*, uint8_t[tee_SHA1_DIGEST_LENGTH]);
+char* tee_sha1_End(tee_SHA1_CTX*, char[tee_SHA1_DIGEST_STRING_LENGTH]);
+void tee_sha1_Raw(const uint8_t*, size_t, uint8_t[tee_SHA1_DIGEST_LENGTH]);
+char* tee_sha1_Data(const uint8_t*, size_t, char[tee_SHA1_DIGEST_STRING_LENGTH]);
 
-void sha256_Transform(const uint32_t* state_in, const uint32_t* data, uint32_t* state_out);
-void sha256_Init(SHA256_CTX *);
-void sha256_Update(SHA256_CTX*, const uint8_t*, size_t);
-void sha256_Final(SHA256_CTX*, uint8_t[SHA256_DIGEST_LENGTH]);
-char* sha256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
-void sha256_Raw(const uint8_t*, size_t, uint8_t[SHA256_DIGEST_LENGTH]);
-char* sha256_Data(const uint8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
+void tee_sha256_Transform(const uint32_t* state_in, const uint32_t* data, uint32_t* state_out);
+void tee_sha256_Init(tee_SHA256_CTX *);
+void tee_sha256_Update(tee_SHA256_CTX*, const uint8_t*, size_t);
+void tee_sha256_Final(tee_SHA256_CTX*, uint8_t[tee_SHA256_DIGEST_LENGTH]);
+char* tee_sha256_End(tee_SHA256_CTX*, char[tee_SHA256_DIGEST_STRING_LENGTH]);
+void tee_sha256_Raw(const uint8_t*, size_t, uint8_t[tee_SHA256_DIGEST_LENGTH]);
+char* tee_sha256_Data(const uint8_t*, size_t, char[tee_SHA256_DIGEST_STRING_LENGTH]);
 
-void sha512_Transform(const uint64_t* state_in, const uint64_t* data, uint64_t* state_out);
-void sha512_Init(SHA512_CTX*);
-void sha512_Update(SHA512_CTX*, const uint8_t*, size_t);
-void sha512_Final(SHA512_CTX*, uint8_t[SHA512_DIGEST_LENGTH]);
-char* sha512_End(SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]);
-void sha512_Raw(const uint8_t*, size_t, uint8_t[SHA512_DIGEST_LENGTH]);
-char* sha512_Data(const uint8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
+void tee_sha512_Transform(const uint64_t* state_in, const uint64_t* data, uint64_t* state_out);
+void tee_sha512_Init(tee_SHA512_CTX*);
+void tee_sha512_Update(tee_SHA512_CTX*, const uint8_t*, size_t);
+void tee_sha512_Final(tee_SHA512_CTX*, uint8_t[tee_SHA512_DIGEST_LENGTH]);
+char* tee_sha512_End(tee_SHA512_CTX*, char[tee_SHA512_DIGEST_STRING_LENGTH]);
+void tee_sha512_Raw(const uint8_t*, size_t, uint8_t[tee_SHA512_DIGEST_LENGTH]);
+char* tee_sha512_Data(const uint8_t*, size_t, char[tee_SHA512_DIGEST_STRING_LENGTH]);
 
 #endif
