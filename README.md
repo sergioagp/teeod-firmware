@@ -3,6 +3,7 @@
 The TEEOD firmware is responsible for running on the Enclave's Arm Cortex-M1 and providing the GP TEE Internal Core API and runtime engine.
 
 ## Project Structure
+```
 .
 ├── board
 │   ├── linker
@@ -14,7 +15,7 @@ The TEEOD firmware is responsible for running on the Enclave's Arm Cortex-M1 and
 │   └── sha
 ├── ta
 └── tee
-
+```
 ## Getting Started
 
 To get started with the project:
